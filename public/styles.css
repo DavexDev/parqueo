@@ -1,0 +1,399 @@
+/* styles.css — Tema global Parqueos Esquipulas */
+:root {
+  --primary: #1565c0;
+  --primary-light: #1976d2;
+  --primary-dark: #0d47a1;
+  --accent: #00c853;
+  --accent-dark: #00a844;
+  --bg: #f0f2f5;
+  --card-bg: #ffffff;
+  --text: #212529;
+  --text-muted: #6c757d;
+  --border-radius: 14px;
+  --shadow: 0 2px 12px rgba(0,0,0,0.08);
+  --shadow-lg: 0 4px 24px rgba(0,0,0,0.12);
+  --transition: 0.2s ease;
+}
+
+* { box-sizing: border-box; }
+
+body {
+  background: var(--bg);
+  color: var(--text);
+  font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+  margin: 0;
+  padding: 0;
+  min-height: 100dvh;
+  -webkit-font-smoothing: antialiased;
+}
+
+/* ===== NAVBAR ===== */
+.navbar-parqueo {
+  background: linear-gradient(135deg, var(--primary-dark), var(--primary-light));
+  padding: 0.65rem 1rem;
+  position: sticky;
+  top: 0;
+  z-index: 100;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.15);
+}
+.navbar-parqueo .navbar-brand {
+  font-weight: 700;
+  font-size: 1.15rem;
+  letter-spacing: -0.3px;
+}
+.navbar-parqueo .badge { font-weight: 500; }
+.navbar-parqueo .btn-outline-light {
+  border-radius: 20px;
+  font-size: 0.8rem;
+  padding: 0.25rem 0.75rem;
+}
+
+/* ===== PAGE CONTAINER ===== */
+.page-container {
+  max-width: 480px;
+  margin: 0 auto;
+  padding: 1rem 1rem 5rem;
+}
+
+/* ===== CARDS ===== */
+.card-parqueo {
+  background: var(--card-bg);
+  border: none;
+  border-radius: var(--border-radius);
+  box-shadow: var(--shadow);
+  transition: transform var(--transition), box-shadow var(--transition);
+  overflow: hidden;
+}
+.card-parqueo:active {
+  transform: scale(0.98);
+  box-shadow: var(--shadow-lg);
+}
+
+/* ===== BOTONES ===== */
+.btn-main {
+  background: linear-gradient(135deg, var(--primary), var(--primary-light));
+  color: #fff;
+  border: none;
+  border-radius: 12px;
+  padding: 0.85rem 1.5rem;
+  font-size: 1.05rem;
+  font-weight: 600;
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  transition: background var(--transition), transform var(--transition);
+  text-decoration: none;
+  cursor: pointer;
+}
+.btn-main:hover, .btn-main:focus { background: var(--primary-dark); color: #fff; transform: translateY(-1px); }
+
+.btn-accent {
+  background: linear-gradient(135deg, var(--accent), var(--accent-dark));
+  color: #fff;
+  border: none;
+  border-radius: 12px;
+  padding: 0.85rem 1.5rem;
+  font-size: 1.05rem;
+  font-weight: 600;
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  transition: background var(--transition), transform var(--transition);
+  text-decoration: none;
+  cursor: pointer;
+}
+.btn-accent:hover, .btn-accent:focus { background: var(--accent-dark); color: #fff; transform: translateY(-1px); }
+
+.btn-ghost {
+  background: transparent;
+  color: var(--primary);
+  border: 2px solid var(--primary);
+  border-radius: 12px;
+  padding: 0.75rem 1.5rem;
+  font-size: 1.05rem;
+  font-weight: 600;
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  transition: all var(--transition);
+  text-decoration: none;
+  cursor: pointer;
+}
+.btn-ghost:hover { background: var(--primary); color: #fff; }
+
+.btn-dark-custom {
+  background: #263238;
+  color: #fff;
+  border: none;
+  border-radius: 12px;
+  padding: 0.85rem 1.5rem;
+  font-size: 1.05rem;
+  font-weight: 600;
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  text-decoration: none;
+  cursor: pointer;
+}
+.btn-dark-custom:hover { background: #37474f; color: #fff; }
+
+/* ===== FORMULARIOS ===== */
+.form-control, .form-select {
+  border-radius: 10px;
+  padding: 0.7rem 1rem;
+  border: 1.5px solid #dee2e6;
+  font-size: 1rem;
+  transition: border-color var(--transition), box-shadow var(--transition);
+}
+.form-control:focus, .form-select:focus {
+  border-color: var(--primary-light);
+  box-shadow: 0 0 0 3px rgba(25,118,210,0.15);
+}
+
+.form-label {
+  font-weight: 600;
+  font-size: 0.9rem;
+  color: var(--text-muted);
+  margin-bottom: 0.3rem;
+}
+
+/* ===== SECTION HEADERS ===== */
+.section-title {
+  font-size: 1.35rem;
+  font-weight: 700;
+  color: var(--text);
+  margin-bottom: 1rem;
+}
+
+.section-subtitle {
+  font-size: 0.95rem;
+  color: var(--text-muted);
+  margin-bottom: 1.25rem;
+}
+
+/* ===== BADGES ===== */
+.badge-tipo {
+  background: #e3f2fd;
+  color: var(--primary);
+  font-weight: 600;
+  padding: 0.3rem 0.6rem;
+  border-radius: 8px;
+  font-size: 0.78rem;
+}
+.badge-precio {
+  background: #e8f5e9;
+  color: #2e7d32;
+  font-weight: 700;
+  padding: 0.3rem 0.6rem;
+  border-radius: 8px;
+  font-size: 0.85rem;
+}
+.badge-rol {
+  padding: 0.25rem 0.55rem;
+  border-radius: 8px;
+  font-size: 0.75rem;
+  font-weight: 600;
+}
+.badge-visitante { background: #e3f2fd; color: var(--primary); }
+.badge-anfitrion { background: #e8f5e9; color: #2e7d32; }
+.badge-admin { background: #fce4ec; color: #c62828; }
+
+/* ===== PARKING CARD ===== */
+.parking-card {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 0.85rem;
+  margin-bottom: 0.75rem;
+  background: var(--card-bg);
+  border-radius: var(--border-radius);
+  box-shadow: var(--shadow);
+  text-decoration: none;
+  color: var(--text);
+  transition: transform var(--transition), box-shadow var(--transition);
+}
+.parking-card:active { transform: scale(0.98); }
+.parking-card .parking-icon {
+  width: 52px; height: 52px;
+  background: linear-gradient(135deg, var(--primary), var(--primary-light));
+  border-radius: 12px;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 1.5rem;
+  color: #fff;
+  flex-shrink: 0;
+}
+.parking-card .parking-info { flex: 1; min-width: 0; }
+.parking-card .parking-info h6 { margin: 0; font-weight: 700; font-size: 0.95rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.parking-card .parking-info small { color: var(--text-muted); }
+.parking-card .parking-action { flex-shrink: 0; }
+
+/* ===== CHAT ===== */
+.chat-container { display: flex; flex-direction: column; height: calc(100dvh - 180px); }
+.chat-contacts {
+  border-right: 1px solid #e0e0e0;
+  overflow-y: auto;
+  background: #fafafa;
+  border-radius: var(--border-radius) 0 0 var(--border-radius);
+}
+.chat-messages {
+  flex: 1;
+  overflow-y: auto;
+  padding: 0.75rem;
+  background: #fff;
+  display: flex;
+  flex-direction: column;
+}
+.msg-bubble {
+  border-radius: 18px;
+  padding: 0.6rem 1rem;
+  margin-bottom: 0.5rem;
+  max-width: 82%;
+  word-break: break-word;
+  font-size: 0.95rem;
+  line-height: 1.4;
+  position: relative;
+}
+.msg-out {
+  background: linear-gradient(135deg, #d1e7dd, #c3e6cb);
+  margin-left: auto;
+  text-align: right;
+  border-bottom-right-radius: 4px;
+}
+.msg-in {
+  background: #f1f3f5;
+  margin-right: auto;
+  border-bottom-left-radius: 4px;
+}
+.msg-time { font-size: 0.7rem; color: var(--text-muted); margin-top: 2px; }
+
+.contact-item {
+  cursor: pointer;
+  padding: 0.7rem 0.85rem;
+  border-bottom: 1px solid #eee;
+  transition: background var(--transition);
+}
+.contact-item:hover { background: #e3f2fd; }
+.contact-item.active { background: #bbdefb; font-weight: 600; }
+
+/* ===== ALERTS ===== */
+.alert-parqueo {
+  border-radius: 12px;
+  padding: 0.85rem 1rem;
+  font-size: 0.95rem;
+  border: none;
+}
+
+/* ===== HOME HERO ===== */
+.home-hero {
+  text-align: center;
+  padding: 2.5rem 1.5rem 1rem;
+}
+.home-hero .hero-icon {
+  width: 80px; height: 80px;
+  background: linear-gradient(135deg, var(--primary), var(--primary-light));
+  border-radius: 24px;
+  display: inline-flex; align-items: center; justify-content: center;
+  font-size: 2.5rem;
+  color: #fff;
+  margin-bottom: 1rem;
+  box-shadow: 0 4px 16px rgba(21,101,192,0.3);
+}
+.home-hero h1 {
+  font-size: 1.5rem;
+  font-weight: 800;
+  line-height: 1.3;
+  margin-bottom: 0.5rem;
+}
+.home-hero p {
+  color: var(--text-muted);
+  font-size: 0.95rem;
+  margin-bottom: 1.5rem;
+}
+
+/* ===== BOTTOM BAR (tab nav) ===== */
+.bottom-bar {
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  background: #fff;
+  box-shadow: 0 -2px 12px rgba(0,0,0,0.08);
+  display: flex;
+  justify-content: space-around;
+  padding: 0.4rem 0 env(safe-area-inset-bottom, 0.3rem);
+  z-index: 100;
+}
+.bottom-bar a {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.15rem;
+  color: var(--text-muted);
+  text-decoration: none;
+  font-size: 0.7rem;
+  font-weight: 600;
+  padding: 0.3rem 0.5rem;
+  transition: color var(--transition);
+}
+.bottom-bar a .tab-icon { font-size: 1.35rem; }
+.bottom-bar a.active, .bottom-bar a:hover { color: var(--primary); }
+
+/* ===== DIVIDER ===== */
+.divider {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  margin: 1.25rem 0;
+  color: var(--text-muted);
+  font-size: 0.85rem;
+}
+.divider::before, .divider::after {
+  content: '';
+  flex: 1;
+  height: 1px;
+  background: #dee2e6;
+}
+
+/* ===== STAT CARD (admin) ===== */
+.stat-card-new {
+  background: var(--card-bg);
+  border-radius: var(--border-radius);
+  padding: 1rem;
+  box-shadow: var(--shadow);
+  text-align: center;
+}
+.stat-card-new .stat-number {
+  font-size: 1.75rem;
+  font-weight: 800;
+  line-height: 1;
+}
+.stat-card-new .stat-label {
+  font-size: 0.8rem;
+  color: var(--text-muted);
+  font-weight: 600;
+}
+.stat-card-new.blue .stat-number { color: var(--primary); }
+.stat-card-new.green .stat-number { color: #2e7d32; }
+.stat-card-new.orange .stat-number { color: #e65100; }
+.stat-card-new.purple .stat-number { color: #6a1b9a; }
+
+/* ===== RESPONSIVE ===== */
+@media (min-width: 576px) {
+  .page-container { max-width: 540px; }
+}
+@media (min-width: 768px) {
+  .page-container { max-width: 640px; }
+}
+
+/* ===== UTILITIES ===== */
+.gap-075 { gap: 0.75rem; }
+.mb-075 { margin-bottom: 0.75rem; }
+.rounded-xl { border-radius: var(--border-radius); }

@@ -1,0 +1,211 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Panel de Administración</title>
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css">
+  <link rel="stylesheet" href="styles.css">
+  <style>
+    .admin-table { font-size: 0.85rem; }
+    .admin-table th { background: var(--primary); color: #fff; font-weight: 600; }
+    .admin-table td { vertical-align: middle; }
+    .nav-tabs .nav-link { color: var(--primary); font-weight: 600; border-radius: 10px 10px 0 0; }
+    .nav-tabs .nav-link.active { background: var(--primary); color: #fff; }
+  </style>
+</head>
+<body>
+  <nav class="navbar navbar-dark navbar-parqueo">
+    <div class="container-fluid">
+      <a class="navbar-brand text-white fw-bold" href="index.html">🅿️ Parqueos · Admin</a>
+    </div>
+  </nav>
+
+  <div class="page-container" style="max-width:900px;padding-bottom:80px;">
+    <h2 class="section-title">🛠️ Panel de administración</h2>
+
+    <!-- Métricas -->
+    <div class="row g-3 mb-4" id="metricas"></div>
+
+    <!-- Tabs -->
+    <ul class="nav nav-tabs mb-3" id="adminTabs" role="tablist">
+      <li class="nav-item"><a class="nav-link active" data-bs-toggle="tab" href="#tabUsers">👤 Usuarios</a></li>
+      <li class="nav-item"><a class="nav-link" data-bs-toggle="tab" href="#tabParkings">🅿️ Parqueos</a></li>
+      <li class="nav-item"><a class="nav-link" data-bs-toggle="tab" href="#tabReservations">📅 Reservas</a></li>
+      <li class="nav-item"><a class="nav-link" data-bs-toggle="tab" href="#tabMessages">💬 Mensajes</a></li>
+    </ul>
+    <div class="tab-content">
+      <div class="tab-pane fade show active" id="tabUsers">
+        <div class="table-responsive">
+          <table class="table admin-table">
+            <thead><tr><th>ID</th><th>Nombre</th><th>Email</th><th>Rol</th><th></th></tr></thead>
+            <tbody id="tbUsers"></tbody>
+          </table>
+        </div>
+      </div>
+      <div class="tab-pane fade" id="tabParkings">
+        <div class="table-responsive">
+          <table class="table admin-table">
+            <thead><tr><th>ID</th><th>Nombre</th><th>Tipo</th><th>Precio</th><th>Dirección</th><th>Anfitrión</th><th>Disp.</th><th></th></tr></thead>
+            <tbody id="tbParkings"></tbody>
+          </table>
+        </div>
+      </div>
+      <div class="tab-pane fade" id="tabReservations">
+        <div class="table-responsive">
+          <table class="table admin-table">
+            <thead><tr><th>ID</th><th>Parqueo</th><th>Usuario</th><th>Fecha</th><th>Estado</th><th></th></tr></thead>
+            <tbody id="tbReservations"></tbody>
+          </table>
+        </div>
+      </div>
+      <div class="tab-pane fade" id="tabMessages">
+        <div class="table-responsive">
+          <table class="table admin-table">
+            <thead><tr><th>ID</th><th>De</th><th>Para</th><th>Texto</th><th>Fecha</th><th>Leído</th></tr></thead>
+            <tbody id="tbMessages"></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script src="app.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+  <script>
+    document.addEventListener('DOMContentLoaded', () => {
+      renderNavbar();
+      renderBottomBar('admin');
+      cargarMetricas();
+      cargarUsuarios();
+      cargarParqueos();
+      cargarReservas();
+      cargarMensajes();
+    });
+
+    function cargarMetricas() {
+      fetch('/api/admin/metrics')
+        .then(r => r.json())
+        .then(m => {
+          document.getElementById('metricas').innerHTML = `
+            <div class="col-6 col-md-3"><div class="stat-card-new" style="border-left:4px solid var(--primary);"><div class="stat-value">${m.totalUsuarios}</div><div class="stat-label">Usuarios</div></div></div>
+            <div class="col-6 col-md-3"><div class="stat-card-new" style="border-left:4px solid var(--accent);"><div class="stat-value">${m.totalParqueos}</div><div class="stat-label">Parqueos</div></div></div>
+            <div class="col-6 col-md-3"><div class="stat-card-new" style="border-left:4px solid #ff9800;"><div class="stat-value">${m.totalReservas}</div><div class="stat-label">Reservas</div></div></div>
+            <div class="col-6 col-md-3"><div class="stat-card-new" style="border-left:4px solid #9c27b0;"><div class="stat-value">${m.totalMensajes}</div><div class="stat-label">Mensajes</div></div></div>
+            <div class="col-12"><div class="alert alert-parqueo" style="background:rgba(21,101,192,0.08);border-left:4px solid var(--primary);">
+              📊 Pendientes: <b>${m.reservasPendientes}</b> · Confirmadas: <b>${m.reservasConfirmadas}</b> · Finalizadas: <b>${m.reservasFinalizadas}</b> · Ocupación: <b>${m.ocupacion}%</b>
+            </div></div>
+          `;
+        });
+    }
+
+    function cargarUsuarios() {
+      fetch('/api/admin/users')
+        .then(r => r.json())
+        .then(users => {
+          const tb = document.getElementById('tbUsers');
+          tb.innerHTML = '';
+          users.forEach(u => {
+            tb.innerHTML += `<tr>
+              <td>${u.id}</td><td>${u.nombre}</td><td>${u.email}</td><td><span class="badge-rol">${u.rol}</span></td>
+              <td><button class="btn btn-outline-danger btn-sm" onclick="eliminarUsuario(${u.id})">🗑️</button></td>
+            </tr>`;
+          });
+        });
+    }
+
+    function eliminarUsuario(id) {
+      if (!confirm('¿Eliminar este usuario?')) return;
+      fetch('/api/admin/users/' + id, { method: 'DELETE' })
+        .then(r => r.json())
+        .then(() => { cargarUsuarios(); cargarMetricas(); });
+    }
+
+    function cargarParqueos() {
+      fetch('/api/admin/parkings')
+        .then(r => r.json())
+        .then(parks => {
+          const tb = document.getElementById('tbParkings');
+          tb.innerHTML = '';
+          parks.forEach(p => {
+            tb.innerHTML += `<tr>
+              <td>${p.id}</td><td>${p.nombre}</td><td><span class="badge-tipo">${p.tipo}</span></td><td><span class="badge-precio">Q${p.precio}</span></td><td>${p.direccion}</td><td>${p.anfitrionNombre}</td>
+              <td>${p.disponible ? '<span class="badge bg-success">Sí</span>' : '<span class="badge bg-danger">No</span>'}</td>
+              <td><button class="btn btn-outline-danger btn-sm" onclick="eliminarParqueo(${p.id})">🗑️</button></td>
+            </tr>`;
+          });
+        });
+    }
+
+    function eliminarParqueo(id) {
+      if (!confirm('¿Eliminar este parqueo?')) return;
+      fetch('/api/admin/parkings/' + id, { method: 'DELETE' })
+        .then(r => r.json())
+        .then(() => { cargarParqueos(); cargarMetricas(); });
+    }
+
+    function cargarReservas() {
+      fetch('/api/admin/reservations')
+        .then(r => r.json())
+        .then(reservas => {
+          const tb = document.getElementById('tbReservations');
+          tb.innerHTML = '';
+          reservas.forEach(r => {
+            tb.innerHTML += `<tr>
+              <td>${r.id}</td><td>${r.parqueoNombre}</td><td>${r.usuarioNombre}</td><td>${r.fecha}</td>
+              <td>
+                <select class="form-select form-select-sm" onchange="cambiarEstado(${r.id}, this.value)" style="width:auto;display:inline">
+                  <option value="pendiente" ${r.estado==='pendiente'?'selected':''}>Pendiente</option>
+                  <option value="confirmada" ${r.estado==='confirmada'?'selected':''}>Confirmada</option>
+                  <option value="finalizada" ${r.estado==='finalizada'?'selected':''}>Finalizada</option>
+                </select>
+              </td>
+              <td><button class="btn btn-outline-primary btn-sm" onclick="notificarReserva(${r.id})">📧</button></td>
+            </tr>`;
+          });
+        });
+    }
+
+    function cambiarEstado(id, estado) {
+      fetch('/api/admin/reservations/' + id, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ estado })
+      }).then(() => { cargarReservas(); cargarMetricas(); });
+    }
+
+    function notificarReserva(id) {
+      fetch('/api/notify/reservation', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ reservaId: id })
+      })
+      .then(r => r.json())
+      .then(resp => {
+        if (resp.success) {
+          const detalles = resp.results.map(r => `${r.to}: ${r.sent ? 'Enviado' : 'Error: ' + (r.error || '')}`).join('\n');
+          alert('Notificación enviada:\n' + detalles);
+        } else {
+          alert('Error al notificar');
+        }
+      });
+    }
+
+    function cargarMensajes() {
+      fetch('/api/admin/messages')
+        .then(r => r.json())
+        .then(msgs => {
+          const tb = document.getElementById('tbMessages');
+          tb.innerHTML = '';
+          msgs.forEach(m => {
+            tb.innerHTML += `<tr>
+              <td>${m.id}</td><td>${m.deNombre}</td><td>${m.paraNombre}</td><td>${m.texto}</td>
+              <td>${new Date(m.fecha).toLocaleString('es-GT')}</td>
+              <td>${m.leido ? '✅' : '⏳'}</td>
+            </tr>`;
+          });
+        });
+    }
+  </script>
+</body>
+</html>

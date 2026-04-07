@@ -1,0 +1,78 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Buscar Parqueos</title>
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css">
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <nav class="navbar navbar-dark navbar-parqueo">
+    <div class="container-fluid">
+      <a class="navbar-brand text-white fw-bold" href="index.html">🅿️ Parqueos</a>
+    </div>
+  </nav>
+
+  <div class="page-container">
+    <h2 class="section-title">🔍 Parqueos disponibles</h2>
+    <form id="filtros" class="mb-3">
+      <div class="d-flex gap-2">
+        <select class="form-select" id="tipoFiltro">
+          <option value="">Tipo</option>
+          <option value="auto">🚗 Auto</option>
+          <option value="moto">🏍️ Moto</option>
+        </select>
+        <input type="number" class="form-control" id="precioFiltro" placeholder="Precio máx.">
+        <button type="submit" class="btn-main" style="min-width:80px;padding:0.5rem;">Filtrar</button>
+      </div>
+    </form>
+    <div id="listaParqueos"></div>
+  </div>
+
+  <script src="app.js"></script>
+  <script>
+    document.addEventListener('DOMContentLoaded', () => { renderNavbar(); renderBottomBar('parkings'); cargarParqueos(); });
+    document.getElementById('filtros').addEventListener('submit', function(e) {
+      e.preventDefault();
+      cargarParqueos();
+    });
+    function cargarParqueos() {
+      fetch('/api/parkings')
+        .then(r => r.json())
+        .then(data => {
+          const tipo = document.getElementById('tipoFiltro').value;
+          const precio = document.getElementById('precioFiltro').value;
+          let parqueos = data;
+          if (tipo) parqueos = parqueos.filter(p => p.tipo === tipo);
+          if (precio) parqueos = parqueos.filter(p => p.precio <= precio);
+          const cont = document.getElementById('listaParqueos');
+          cont.innerHTML = '';
+          if (parqueos.length === 0) {
+            cont.innerHTML = '<div class="text-center text-muted py-5">No hay parqueos disponibles</div>';
+            return;
+          }
+          parqueos.forEach(p => {
+            const icon = p.tipo === 'moto' ? '🏍️' : '🚗';
+            cont.innerHTML += `
+              <div class="parking-card">
+                <div class="parking-icon">${icon}</div>
+                <div class="parking-info">
+                  <h6>${p.nombre}</h6>
+                  <small>${p.direccion}</small>
+                  <div class="mt-1">
+                    <span class="badge-tipo">${p.tipo}</span>
+                    <span class="badge-precio">Q${p.precio}</span>
+                  </div>
+                </div>
+                <div class="parking-action">
+                  <a href="reserve.html?id=${p.id}" class="btn-main" style="padding:0.5rem 1rem;font-size:0.85rem;width:auto;">Reservar</a>
+                </div>
+              </div>
+            `;
+          });
+        });
+    }
+  </script>
+</body>
+</html>
