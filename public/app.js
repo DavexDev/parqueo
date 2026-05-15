@@ -97,7 +97,7 @@ function renderBottomBar(activePage) {
   } else if (user.rol === 'admin') {
     pages.push({ href: 'index.html', icon: 'bi-house-door-fill', label: 'Inicio', key: 'home' });
     pages.push({ href: 'admin.html', icon: 'bi-sliders', label: 'Admin', key: 'admin' });
-    pages.push({ href: 'parkings.html', icon: 'bi-search', label: 'Parqueos', key: 'parkings' });
+    pages.push({ href: 'messages.html', icon: 'bi-chat-dots-fill', label: 'Mensajes', key: 'messages' });
     pages.push({ href: 'metrics.html', icon: 'bi-bar-chart-line-fill', label: 'Métricas', key: 'metrics' });
   }
   const bar = document.createElement('div');

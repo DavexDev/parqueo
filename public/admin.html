@@ -137,11 +137,12 @@
 
       <!-- TAB: Mensajes -->
       <div class="tab-pane fade" id="tabMessages">
-        <div class="tab-header">
-          <h3><i class="bi bi-chat-dots-fill icon-inline"></i>Mensajes del Sistema</h3>
+        <div class="tab-header d-flex justify-content-between align-items-center">
+          <h3><i class="bi bi-chat-dots-fill icon-inline"></i>Mensajes</h3>
+          <a href="messages.html" class="btn-main" style="padding:.45rem 1.1rem;font-size:.85rem;"><i class="bi bi-chat-dots-fill icon-inline"></i>Abrir chat completo</a>
         </div>
         <div id="listaMensajes">
-          <div class="text-center text-muted py-4">Cargando mensajes...</div>
+          <div class="text-center text-muted py-4">Cargando...</div>
         </div>
       </div>
     </div>
@@ -222,7 +223,8 @@
               <div class="list-item-meta">${esc(u.email||'')} · <span class="badge-rol" style="background:${rolColor};color:#fff;">${u.rol}</span></div>
             </div>
             <div class="list-item-actions">
-              ${u.rol !== 'admin' ? `<button class="btn btn-outline-danger btn-sm" onclick="eliminarUsuario('${u.id}')"><i class="bi bi-trash"></i></button>` : ''}
+              <a href="messages.html?chat=${u.id}" class="btn btn-outline-primary btn-sm" title="Enviar mensaje"><i class="bi bi-chat-dots"></i></a>
+              ${u.rol !== 'admin' ? `<button class="btn btn-outline-danger btn-sm ms-1" onclick="eliminarUsuario('${u.id}')"><i class="bi bi-trash"></i></button>` : ''}
             </div>
           </div>`;
       });
@@ -364,22 +366,38 @@
       if (!window.rdpSupabase?.isConfigured) { cont.innerHTML = '<div class="text-muted p-3">Requiere Supabase.</div>'; return; }
       const client = window.rdpSupabase.getClient();
       const { data: msgs } = await client.from('messages')
-        .select('*, sender:profiles!sender_id(nombre), receiver:profiles!receiver_id(nombre)')
-        .is('deleted_at', null).order('created_at', { ascending: false }).limit(50);
+        .select('*, sender:profiles!sender_id(id,nombre), receiver:profiles!receiver_id(id,nombre)')
+        .is('deleted_at', null).order('created_at', { ascending: false }).limit(100);
       cont.innerHTML = '';
       if (!msgs?.length) { cont.innerHTML = '<div class="text-center text-muted py-4">Sin mensajes</div>'; return; }
+
+      // Agrupar por conversación (par de usuarios)
+      const convMap = {};
       msgs.forEach(m => {
-        const leido = m.read_at != null;
-        const icono = leido ? '<i class="bi bi-check-circle-fill" style="color:#2e7d32;"></i>' : '<i class="bi bi-hourglass-split" style="color:#e65100;"></i>';
-        const texto = esc(m.content || '');
+        const key = [m.sender_id, m.receiver_id].sort().join('_');
+        if (!convMap[key]) {
+          convMap[key] = {
+            key,
+            user1Id: m.sender?.id, user1: m.sender?.nombre || '?',
+            user2Id: m.receiver?.id, user2: m.receiver?.nombre || '?',
+            lastMsg: m.contenido, lastTime: m.created_at, count: 0
+          };
+        }
+        convMap[key].count++;
+      });
+
+      Object.values(convMap).forEach(c => {
+        const preview = esc(c.lastMsg || '').substring(0, 70);
         cont.innerHTML += `
-          <div class="list-item" style="border-left-color:var(--rdp-navy);">
+          <div class="list-item">
             <div class="list-item-info">
-              <div class="list-item-title"><i class="bi bi-chat-dots icon-inline"></i><b>${esc(m.sender?.nombre||'?')}</b> → ${esc(m.receiver?.nombre||'?')}</div>
-              <div class="list-item-meta">"${texto.substring(0,80)}${texto.length>80?'…':''}"</div>
-              <div class="list-item-meta">${new Date(m.created_at).toLocaleString('es-GT')}</div>
+              <div class="list-item-title"><i class="bi bi-chat-dots icon-inline"></i><b>${esc(c.user1)}</b> <i class="bi bi-arrow-left-right" style="font-size:.75rem;opacity:.5;"></i> <b>${esc(c.user2)}</b></div>
+              <div class="list-item-meta">"${preview}${c.lastMsg?.length>70?'…':''}" · ${new Date(c.lastTime).toLocaleString('es-GT',{dateStyle:'short',timeStyle:'short'})}</div>
+              <div class="list-item-meta">${c.count} mensaje${c.count!==1?'s':''}</div>
             </div>
-            <div>${icono}</div>
+            <div class="list-item-actions">
+              <a href="messages.html?chat=${c.user1Id}" class="btn btn-outline-primary btn-sm" title="Chatear con ${esc(c.user1)}"><i class="bi bi-chat-dots"></i></a>
+            </div>
           </div>`;
       });
     }

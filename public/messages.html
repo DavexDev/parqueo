@@ -26,6 +26,9 @@
         <div class="chat-contacts-header">
           <i class="bi bi-chat-dots-fill icon-inline"></i>Mensajes
         </div>
+        <div id="adminSearchBox" style="display:none;padding:.5rem .75rem;border-bottom:1px solid var(--border);">
+          <input type="search" id="contactSearch" class="form-control form-control-sm" placeholder="Buscar usuario..." oninput="filtrarContactos(this.value)" style="border-radius:20px;">
+        </div>
         <div class="chat-contacts-list" id="contactos">
           <div class="text-center py-4"><div class="spinner-border spinner-border-sm" style="color:var(--rdp-navy);"></div></div>
         </div>
@@ -65,20 +68,28 @@
   </div>
 
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
+  <script src="lib/push.js"></script>
   <script src="app.js"></script>
   <script src="lib/supabase-client.js"></script>
   <script>
-    const user = requireLogin(['visitante', 'anfitrion']);
+    const user = requireLogin(['visitante', 'anfitrion', 'admin']);
     if (!user) throw new Error('No session');
     const currentUserId = user.id;
+    const isAdmin = user.rol === 'admin';
     let chatWithId = null, chatWithNombre = '', convSub = null, typingTimer = null;
 
     document.addEventListener('DOMContentLoaded', () => {
       renderNavbar();
       renderBottomBar('messages');
+      if (isAdmin) document.getElementById('adminSearchBox').style.display = '';
       cargarContactos();
       document.getElementById('formMsg').addEventListener('submit', enviarMensaje);
       document.getElementById('textoMsg').addEventListener('input', onTyping);
+
+      // Notificaciones push: notificar al abrir tab cuando llega mensaje nuevo
+      if (window.rdpPush && user?.id) {
+        window.rdpPush.init(user.id).catch(() => {});
+      }
     });
 
     // ── HELPERS ───────────────────────────────────────────────────
@@ -114,16 +125,45 @@
         }
         if (!m.leido && m.receiver_id === currentUserId) map[otherId].unread++;
       });
-      renderContactos(Object.values(map));
+
+      // Admin: merge all users so they can start conversations with anyone
+      if (isAdmin && window.rdpSupabase.getAdminUsers) {
+        const { data: allUsers } = await window.rdpSupabase.getAdminUsers();
+        (allUsers || []).forEach(u => {
+          if (u.id !== currentUserId && !map[u.id]) {
+            map[u.id] = { id: u.id, nombre: u.nombre || u.email || 'Usuario', lastMsg: '', lastTime: null, unread: 0 };
+          }
+        });
+      }
+
+      const contactos = Object.values(map).sort((a, b) => {
+        if (!a.lastTime && !b.lastTime) return a.nombre.localeCompare(b.nombre);
+        if (!a.lastTime) return 1;
+        if (!b.lastTime) return -1;
+        return new Date(b.lastTime) - new Date(a.lastTime);
+      });
+
+      renderContactos(contactos);
       // URL param
       const params = new URLSearchParams(window.location.search);
       if (params.get('chat')) {
-        const target = Object.values(map).find(c => c.id === params.get('chat'));
+        const target = contactos.find(c => c.id === params.get('chat'));
         if (target) abrirConversacion(target.id, target.nombre, null);
       }
     }
 
+    let _todosContactos = [];
     function renderContactos(contactos) {
+      _todosContactos = contactos;
+      _renderContactosFiltrados(contactos);
+    }
+
+    function filtrarContactos(q) {
+      const qq = q.toLowerCase().trim();
+      _renderContactosFiltrados(qq ? _todosContactos.filter(c => c.nombre.toLowerCase().includes(qq)) : _todosContactos);
+    }
+
+    function _renderContactosFiltrados(contactos) {
       const cont = document.getElementById('contactos');
       cont.innerHTML = '';
       if (contactos.length === 0) {
@@ -140,9 +180,9 @@
           <div style="flex:1;min-width:0;">
             <div class="d-flex justify-content-between align-items-center">
               <span class="fw-600" style="color:var(--rdp-navy);font-size:.88rem;">${esc(c.nombre)}</span>
-              <small style="color:var(--text-muted,#9ca3af);font-size:.7rem;">${fmtTime(c.lastTime)}</small>
+              <small style="color:var(--text-muted,#9ca3af);font-size:.7rem;">${c.lastTime ? fmtTime(c.lastTime) : ''}</small>
             </div>
-            <div class="contact-last-msg">${esc(c.lastMsg)}</div>
+            <div class="contact-last-msg">${esc(c.lastMsg || (c.lastTime ? '' : 'Iniciar conversación'))}</div>
           </div>
           ${c.unread > 0 ? '<div class="unread-dot ms-1"></div>' : ''}`;
         li.addEventListener('click', () => abrirConversacion(c.id, c.nombre, li));
@@ -271,8 +311,12 @@
 
       const { error } = await window.rdpSupabase.sendMessage({ sender_id: currentUserId, receiver_id: chatWithId, contenido: texto });
       if (error) {
-        // Revertir: eliminar el burbuja optimista
         document.querySelector(`[data-opt="${optimistic.id}"]`)?.remove();
+      } else {
+        // Notificar al destinatario vía push broadcast
+        if (window.rdpPush) {
+          window.rdpPush.notify(chatWithId, `Nuevo mensaje de ${user.nombre}`, texto.substring(0, 80), `messages.html?chat=${currentUserId}`).catch(() => {});
+        }
       }
     }
   </script>
