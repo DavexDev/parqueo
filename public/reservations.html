@@ -330,8 +330,9 @@ ${puedeCancel(r) ? `
                   </div>
                 </div>
               </div>
-              <div class="modal-footer" style="border:none;padding:.75rem 1.25rem 1.1rem;">
-                <button type="button" class="btn-main" style="width:100%;" data-bs-dismiss="modal">Cerrar</button>
+              <div class="modal-footer" style="border:none;padding:.75rem 1.25rem 1.1rem;gap:.75rem;display:flex;">
+                <button type="button" class="btn-ghost" style="flex:1;" onclick="imprimirRecibo('${r.id}')"><i class="bi bi-printer icon-inline"></i>Imprimir</button>
+                <button type="button" class="btn-main" style="flex:1;" data-bs-dismiss="modal">Cerrar</button>
               </div>
             </div>
           </div>
@@ -341,6 +342,51 @@ ${puedeCancel(r) ? `
       const m = new bootstrap.Modal(modalEl.querySelector('.modal'));
       m.show();
       modalEl.addEventListener('hidden.bs.modal', () => modalEl.remove());
+    }
+
+    function imprimirRecibo(reservaId) {
+      const r = todasReservas.find(x => x.id == reservaId);
+      if (!r) return;
+      const codigo = r.codigo_reserva || r.id?.toString().slice(-8).toUpperCase() || '—';
+      const fmtFull = d => d ? new Date(d).toLocaleString('es-GT', { dateStyle:'long', timeStyle:'short' }) : '—';
+      const metodoLabel = { online:'En línea', llegada:'Al llegar', anticipo:'Con anticipo' }[r.metodo_pago] || (r.metodo_pago || '—');
+      const estadoLabel = { confirmada:'Confirmada', pendiente:'Pendiente', finalizada:'Finalizada', cancelada:'Cancelada' }[r.estado] || r.estado;
+      const qrUrl = `https://api.qrserver.com/v1/create-qr-code/?size=120x120&data=${encodeURIComponent('RDP:'+codigo)}&color=0F172A&bgcolor=FFFFFF`;
+
+      const html = `<!DOCTYPE html><html lang="es"><head><meta charset="UTF-8"><title>Recibo RDP — ${esc(codigo)}</title>
+        <style>
+          body{font-family:Arial,sans-serif;padding:32px;max-width:480px;margin:auto;color:#0F172A;}
+          .header{text-align:center;margin-bottom:24px;border-bottom:3px solid #0F172A;padding-bottom:16px;}
+          .logo{font-size:1.6rem;font-weight:800;color:#0F172A;}
+          .subtitle{font-size:.85rem;color:#64748b;margin-top:4px;}
+          .codigo{font-size:2rem;font-weight:800;letter-spacing:.2em;text-align:center;font-family:monospace;margin:16px 0;border:2px solid #D4AF37;border-radius:10px;padding:12px;}
+          .row{display:flex;justify-content:space-between;padding:8px 0;border-bottom:1px solid #e5e7eb;font-size:.9rem;}
+          .row:last-child{border-bottom:none;font-weight:800;font-size:1rem;}
+          .label{color:#64748b;}
+          .qr{text-align:center;margin:16px 0;}
+          .footer{text-align:center;font-size:.75rem;color:#94a3b8;margin-top:24px;border-top:1px solid #e5e7eb;padding-top:12px;}
+          @media print{body{padding:0;}}
+        </style></head><body>
+        <div class="header">
+          <div class="logo">RDP S.A.</div>
+          <div class="subtitle">Reserva Digital de Parqueos — Esquipulas, Guatemala</div>
+        </div>
+        <div class="codigo">${esc(codigo)}</div>
+        <div class="qr"><img src="${qrUrl}" width="100" height="100" alt="QR"><br><small style="color:#94a3b8;font-size:.7rem;">Muestra este código al anfitrión</small></div>
+        <div class="row"><span class="label">Parqueo</span><b>${esc(r.parqueoNombre||'—')}</b></div>
+        <div class="row"><span class="label">Anfitrión</span><b>${esc(r.anfitrionNombre||'—')}</b></div>
+        <div class="row"><span class="label">Estado</span><b>${esc(estadoLabel)}</b></div>
+        <div class="row"><span class="label">Tipo</span><b>${r.tipo === 'dia' ? 'Por día' : 'Por hora'}</b></div>
+        <div class="row"><span class="label">Inicio</span><b>${fmtFull(r.fechaInicio)}</b></div>
+        <div class="row"><span class="label">Fin</span><b>${fmtFull(r.fechaFin)}</b></div>
+        <div class="row"><span class="label">Método de pago</span><b>${esc(metodoLabel)}</b></div>
+        <div class="row"><span class="label">Total</span><b style="color:#0F172A;">Q${r.precio||0}</b></div>
+        <div class="footer">© 2026 DavexDev · RDP S.A. · Generado el ${new Date().toLocaleString('es-GT')}</div>
+        <script>window.onload=()=>{window.print();}<\/script></body></html>`;
+
+      const win = window.open('', '_blank', 'width=560,height=720');
+      win.document.write(html);
+      win.document.close();
     }
 
     function puedeCancel(r) {
