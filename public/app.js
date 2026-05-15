@@ -10,6 +10,14 @@
 // =============================================================================
 // app.js — Sesión, navbar y helpers globales
 
+function esc(s) {
+  return String(s == null ? '' : s)
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;');
+}
+
 function getUser() {
   const raw = localStorage.getItem('parqueo_user');
   return raw ? JSON.parse(raw) : null;
