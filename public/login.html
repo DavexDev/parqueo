@@ -114,29 +114,105 @@
     <div id="estadoLogin" class="mt-3"></div>
   </div>
 
+  <!-- Panel: elegir rol (solo usuarios nuevos de Google) -->
+  <div id="panelRolPicker" style="display:none;position:fixed;inset:0;z-index:9999;background:var(--bg,#f8fafc);overflow-y:auto;">
+    <div style="max-width:480px;margin:0 auto;padding:2rem 1.25rem;">
+      <div class="text-center mb-4" style="padding-top:2rem;">
+        <div style="width:64px;height:64px;background:linear-gradient(135deg,#0F172A,#1E293B);border-radius:16px;display:inline-flex;align-items:center;justify-content:center;margin-bottom:1rem;box-shadow:0 4px 16px rgba(15,23,42,.2);">
+          <i class="bi bi-p-circle-fill" style="font-size:2rem;color:#D4AF37;"></i>
+        </div>
+        <h3 class="fw-800" style="color:var(--rdp-navy);">¡Bienvenido a RDP S.A.!</h3>
+        <p id="rpBienvenida" class="text-muted" style="font-size:.95rem;"></p>
+        <p class="fw-semibold" style="color:var(--rdp-navy);margin-top:.5rem;">¿Cómo quieres usar la app?</p>
+      </div>
+      <div class="d-flex flex-column gap-3">
+        <button onclick="elegirRol('visitante')" style="width:100%;background:#fff;border:2px solid #e5e7eb;border-radius:16px;padding:1.5rem 1.25rem;cursor:pointer;text-align:left;transition:border-color .2s,box-shadow .2s;" onmouseover="this.style.borderColor='#0F172A';this.style.boxShadow='0 4px 16px rgba(15,23,42,.1)'" onmouseout="this.style.borderColor='#e5e7eb';this.style.boxShadow='none'">
+          <div class="d-flex align-items-center gap-3">
+            <div style="width:52px;height:52px;background:#EFF6FF;border-radius:12px;display:flex;align-items:center;justify-content:center;flex-shrink:0;">
+              <i class="bi bi-car-front-fill" style="font-size:1.5rem;color:#1d4ed8;"></i>
+            </div>
+            <div>
+              <div class="fw-bold" style="color:var(--rdp-navy);font-size:1.05rem;">Busco parqueo</div>
+              <div class="text-muted" style="font-size:.85rem;">Soy visitante — quiero reservar espacios</div>
+            </div>
+          </div>
+        </button>
+        <button onclick="elegirRol('anfitrion')" style="width:100%;background:#fff;border:2px solid #e5e7eb;border-radius:16px;padding:1.5rem 1.25rem;cursor:pointer;text-align:left;transition:border-color .2s,box-shadow .2s;" onmouseover="this.style.borderColor='#D4AF37';this.style.boxShadow='0 4px 16px rgba(212,175,55,.15)'" onmouseout="this.style.borderColor='#e5e7eb';this.style.boxShadow='none'">
+          <div class="d-flex align-items-center gap-3">
+            <div style="width:52px;height:52px;background:#FFFBEB;border-radius:12px;display:flex;align-items:center;justify-content:center;flex-shrink:0;">
+              <i class="bi bi-building-fill" style="font-size:1.5rem;color:#D4AF37;"></i>
+            </div>
+            <div>
+              <div class="fw-bold" style="color:var(--rdp-navy);font-size:1.05rem;">Ofrezco parqueo</div>
+              <div class="text-muted" style="font-size:.85rem;">Soy anfitrión — quiero publicar mis espacios</div>
+            </div>
+          </div>
+        </button>
+      </div>
+      <p class="text-center text-muted mt-4" style="font-size:.78rem;">Podrás cambiarlo más tarde desde tu perfil.</p>
+    </div>
+  </div>
+
   <script src="lib/supabase-client.js"></script>
   <script src="app.js"></script>
   <script>
+    let _pendingGoogleSession = null; // guardamos la sesión mientras el usuario elige rol
+
     // Manejar callback OAuth de Supabase (redirect desde Google)
     async function handleOAuthCallback() {
       if (!window.rdpSupabase?.isConfigured) return;
       // Supabase v2 devuelve tokens en el hash después de OAuth
       const hash = window.location.hash;
       if (!hash.includes('access_token')) return;
+      // Limpiar hash de la URL sin recargar
+      history.replaceState(null, '', window.location.pathname);
       // Esperar a que Supabase procese el hash
-      await new Promise(r => setTimeout(r, 300));
+      await new Promise(r => setTimeout(r, 400));
       const session = await window.rdpSupabase.getSession();
       if (!session || !session.user) return;
-      const { data: profile } = await window.rdpSupabase.getProfile(session.user.id);
-      setUser(
-        {
-          id:     session.user.id,
-          nombre: profile?.nombre || session.user.user_metadata?.full_name || session.user.email,
-          rol:    profile?.rol    || 'visitante',
-          email:  session.user.email
-        },
-        session.access_token
-      );
+
+      const user = session.user;
+      const { data: profile } = await window.rdpSupabase.getProfile(user.id);
+
+      // Detectar usuario nuevo: created_at hace menos de 5 minutos
+      const isNew = (Date.now() - new Date(user.created_at).getTime()) < 5 * 60 * 1000;
+
+      if (isNew) {
+        // Guardar sesión para usarla tras elegir rol
+        _pendingGoogleSession = { session, profile };
+        const nombre = user.user_metadata?.full_name || user.user_metadata?.name || user.email.split('@')[0];
+        document.getElementById('rpBienvenida').textContent = `Hola, ${nombre}`;
+        document.getElementById('panelRolPicker').style.display = '';
+        return;
+      }
+
+      // Usuario existente → guardar y redirigir
+      finalizarLoginGoogle(session, profile);
+    }
+
+    async function elegirRol(rol) {
+      if (!_pendingGoogleSession) return;
+      const { session } = _pendingGoogleSession;
+      const user = session.user;
+      const nombre = user.user_metadata?.full_name || user.user_metadata?.name || user.email.split('@')[0];
+
+      // Actualizar perfil con el rol elegido y el nombre real de Google
+      await window.rdpSupabase.updateProfile(user.id, { rol, nombre });
+
+      // Volver a leer el perfil actualizado
+      const { data: profile } = await window.rdpSupabase.getProfile(user.id);
+      document.getElementById('panelRolPicker').style.display = 'none';
+      finalizarLoginGoogle(session, profile);
+    }
+
+    function finalizarLoginGoogle(session, profile) {
+      setUser({
+        id:     session.user.id,
+        nombre: profile?.nombre || session.user.user_metadata?.full_name || session.user.email,
+        rol:    profile?.rol    || 'visitante',
+        email:  session.user.email,
+        foto:   session.user.user_metadata?.avatar_url || profile?.foto_url || null
+      }, session.access_token);
       window.location.href = 'index.html';
     }
 
