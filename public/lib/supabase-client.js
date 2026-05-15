@@ -152,6 +152,18 @@
     return client.from('parkings_with_host').select('*').eq('id', id).single();
   }
 
+  async function getParkingPhotos(parkingId) {
+    const client = getClient();
+    if (!client) return { data: [], error: null };
+    return client.from('parking_photos').select('*').eq('parking_id', parkingId).order('orden');
+  }
+
+  async function getParkingSchedules(parkingId) {
+    const client = getClient();
+    if (!client) return { data: [], error: null };
+    return client.from('parking_schedules').select('*').eq('parking_id', parkingId).order('dia_semana');
+  }
+
   async function createParking(data) {
     const client = getClient();
     if (!client) return { data: null, error: { message: 'Supabase no configurado' } };
@@ -360,6 +372,8 @@
     // Parkings
     getParkings,
     getParkingById,
+    getParkingPhotos,
+    getParkingSchedules,
     createParking,
     updateParking,
     getVehicleTypes,

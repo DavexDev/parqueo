@@ -274,10 +274,12 @@
       card.id = `card-${p.id}`;
       card.style.overflow = 'hidden';
       card.innerHTML = `
-        ${fotoHtml}
+        <a href="parking-detail.html?id=${p.id}" style="display:block;text-decoration:none;">
+          ${fotoHtml}
+        </a>
         <div class="p-3">
           <div class="d-flex justify-content-between align-items-start mb-1">
-            <h6 class="fw-bold mb-0" style="color:var(--rdp-navy);">${p.nombre}</h6>${estrellas}
+            <a href="parking-detail.html?id=${p.id}" style="text-decoration:none;flex:1;"><h6 class="fw-bold mb-0" style="color:var(--rdp-navy);">${p.nombre}</h6></a>${estrellas}
           </div>
           <small class="text-muted"><i class="bi bi-geo-alt-fill icon-inline"></i>${p.direccion || ''}</small>
           <div class="mt-1 mb-2">${distHtml}</div>
@@ -285,6 +287,7 @@
           <div class="d-flex justify-content-between align-items-center">${precioHtml}${disponible}</div>
           <div class="d-flex gap-2 mt-3">
             ${(p.lat && p.lng) ? `<button class="btn-ghost" style="flex:1;padding:.5rem;font-size:.82rem;" onclick="focusOnMapById('${p.id}')"><i class="bi bi-pin-map-fill icon-inline"></i>Ver en mapa</button>` : ''}
+            <a href="parking-detail.html?id=${p.id}" class="btn-ghost" style="flex:1;text-align:center;padding:.5rem;font-size:.82rem;"><i class="bi bi-info-circle icon-inline"></i>Detalle</a>
             <a href="reserve.html?id=${p.id}" class="btn-main" style="flex:2;text-align:center;padding:.5rem;font-size:.9rem;"><i class="bi bi-calendar-check icon-inline"></i>Reservar</a>
           </div>
         </div>`;
