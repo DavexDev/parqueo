@@ -1,4 +1,11 @@
-// © 2026 DavexDev — Parqueos Esquipulas, Guatemala. Código propietario. Ver /terminos.html.
+// =============================================================================
+// © 2026 DavexDev — Parqueos Esquipulas, Guatemala.
+// CODIGO PROPIETARIO — Todos los derechos reservados.
+// Queda estrictamente prohibido copiar, modificar, distribuir o usar este
+// archivo sin autorizacion escrita previa del autor.
+// El acceso a este archivo no otorga ningun derecho de uso ni licencia.
+// Ver /terminos.html o archivo LICENSE para condiciones completas.
+// =============================================================================
 // app.js — Sesión, navbar y helpers globales
 
 function getUser() {

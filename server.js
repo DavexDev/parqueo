@@ -1,7 +1,12 @@
 // server.js
-// © 2026 DavexDev — Parqueos Esquipulas, Guatemala
-// CÓDIGO PROPIETARIO — Ver archivo LICENSE para condiciones de uso.
-// Queda prohibida la copia, distribución o uso no autorizado de este software.
+// =============================================================================
+// © 2026 DavexDev — Parqueos Esquipulas, Guatemala.
+// CODIGO PROPIETARIO — Todos los derechos reservados.
+// Queda estrictamente prohibido copiar, modificar, distribuir o usar este
+// archivo sin autorizacion escrita previa del autor.
+// El acceso a este archivo no otorga ningun derecho de uso ni licencia.
+// Ver archivo LICENSE para condiciones completas.
+// =============================================================================
 
 require('dotenv').config();
 

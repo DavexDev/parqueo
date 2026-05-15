@@ -1,11 +1,16 @@
 @import url('https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css');
 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap');
 
-/* =======================================
-   RDP S.A. — PARQUEOS ESQUIPULAS
-   Sistema de Diseño v2.0
-   Paleta: Azul Oscuro + Blanco + Dorado
-   ======================================= */
+/*
+ * © 2026 DavexDev — Parqueos Esquipulas, Guatemala.
+ * CODIGO PROPIETARIO — Todos los derechos reservados.
+ * Queda estrictamente prohibido copiar, modificar o redistribuir
+ * este archivo sin autorizacion escrita previa del autor.
+ * Ver archivo LICENSE o /terminos.html para condiciones completas.
+ *
+ * Parqueos Esquipulas — Sistema de Diseno v2.0
+ * Paleta: Navy #0F172A + Blanco + Dorado #D4AF37
+ */
 :root {
   /* Marca RDP */
   --rdp-navy:       #0F172A;
