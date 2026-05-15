@@ -1,6 +1,9 @@
-﻿# Parqueos Esquipulas - MVP DEMO
+﻿# Parqueos Esquipulas
 
-Sistema completo de reserva de estacionamientos. **Demo lista con datos mock, sin dependencias externas.**
+**RDP S.A.** — Sistema de reserva de parqueos para Esquipulas, Guatemala.  
+Plataforma completa con Supabase, autenticación real, RLS y despliegue en Vercel.
+
+**Produccion:** https://parqueo-beryl.vercel.app
 
 ---
 
@@ -21,13 +24,17 @@ Abre → **http://localhost:3000**
 
 ---
 
-## Usuarios Demo
+## Usuarios de Prueba
 
-| Email | Contraseña | Rol |
+| Email | Contrasena | Rol |
 |-------|-----------|-----|
-| `juan@mail.com` | `1234` | Visitante |
-| `ana@mail.com` | `1234` | Anfitrión |
-| `admin@parqueos.com` | `1234` | Admin |
+| `admin@rdp.gt` | `Test1234!` | Admin |
+| `roberto.mendez@test.gt` | `Test1234!` | Anfitrion |
+| `ana.fuentes@test.gt` | `Test1234!` | Anfitrion |
+| `juan.ortiz@test.gt` | `Test1234!` | Visitante |
+| `maria.lopez@test.gt` | `Test1234!` | Visitante |
+
+> Ejecutar `db/seed.sql` en el SQL Editor de Supabase antes de usar estas cuentas.
 
 ---
 
@@ -152,16 +159,16 @@ GET /api/admin/metrics # Dashboard
 
 | Feature | Estado |
 |---------|--------|
-| Autenticación JWT | |
-| 3 Roles RBAC | |
-| Mapa Leaflet.js | |
-| Dark Mode | |
-| Tutorial modal | |
-| Dashboard anfitrión | |
-| Reseñas 5 | |
-| Responsive mobile | |
-| PWA ready | |
-| Mock data completo | |
+| Autenticacion JWT | OK |
+| 3 Roles RBAC | OK |
+| Mapa Leaflet.js | OK |
+| Dark Mode | OK |
+| Tutorial modal | OK |
+| Dashboard anfitrion | OK |
+| Resenas 5 estrellas | OK |
+| Responsive mobile | OK |
+| PWA ready | OK |
+| Supabase RLS | OK |
 
 ---
 
@@ -177,28 +184,29 @@ Todo generado automáticamente al iniciar.
 
 ---
 
-## Stack Utilizado
+## Stack
 
-- **Backend**: Node.js 18+, Express 5.x
+- **Backend**: Node.js 18+, Express 5.x, Vercel Serverless
+- **Base de datos**: Supabase (PostgreSQL + RLS)
+- **Auth**: Supabase Auth + JWT
 - **Frontend**: HTML5, CSS3, Bootstrap 5.3, Vanilla JS
-- **Auth**: jsonwebtoken
-- **Maps**: Leaflet.js + OpenStreetMap
-- **Icons**: Bootstrap Icons (1000+)
+- **Mapas**: Leaflet.js + OpenStreetMap
+- **Iconos**: Bootstrap Icons
+- **Push**: Firebase Cloud Messaging
 - **PWA**: manifest.json, Service Worker
-- **Responsive**: Mobile-first, 100% funcional
 
 ---
 
 ## Highlights
 
- **Sin dependencias externas** (solo Express, JWT, Bootstrap) 
- **Datos mock en memoria** (listo para MySQL) 
- **Clean code** (repositories pattern, middlewares) 
- **CORS configurado** (ready para frontend externo) 
- **Validación completa** (email, roles, input) 
- **Error handling** (respuestas HTTP específicas) 
- **JWT expirable** (7 días) 
- **Role-based access** (requireRole middleware) 
+- Sin dependencias externas de terceros innecesarias
+- Base de datos real con Supabase y Row Level Security
+- Clean code (repositories pattern, middlewares)
+- CORS configurado
+- Validacion completa (email, roles, input)
+- Error handling (respuestas HTTP especificas)
+- JWT expirable (7 dias)
+- Role-based access (requireRole middleware)
 
 ---
 
@@ -235,14 +243,15 @@ Todo se adapta automáticamente.
 
 ---
 
-## Seguridad (Demo)
+## Seguridad
 
- JWT con expiración 
- Contraseña obligatoria 
- No se permite registrar como admin 
- Role-based access control 
- Email validation 
- Input sanitization 
+- JWT con expiracion
+- Contrasena obligatoria
+- Row Level Security en Supabase (patch_v3)
+- Trigger anti-escalada de roles
+- Rate limiting en API (60 req/min por IP, 10 en /auth)
+- HTTP security headers (CSP, X-Frame-Options, HSTS, etc.)
+- Firma del servidor oculta (X-Powered-By eliminado)
 
 ---
 
@@ -279,15 +288,15 @@ Todo se adapta automáticamente.
 
 ## Incluido
 
-- Frontend completo (11 HTML)
-- Backend API (Express 5.x)
-- Autenticación (JWT)
-- Mock data (sin DB)
-- Diseño responsive
-- Dark mode
+- Frontend completo (HTML, CSS, JS)
+- Backend API (Express 5.x + Vercel)
+- Autenticacion real (Supabase Auth)
+- Base de datos Supabase con RLS
+- Seed de datos de prueba (`db/seed.sql`)
+- Paginas legales (terminos, privacidad, cookies)
+- Diseno responsive + dark mode
 - Tutorial interactivo
-- Validación entrada
-- Manejo errores
+- Licencia propietaria
 
 ---
 
@@ -298,4 +307,14 @@ Todo se adapta automáticamente.
 
 ---
 
-Made with for Esquipulas | May 2026
+## Licencia
+
+Codigo propietario — Copyright (c) 2026 RDP S.A.  
+Todos los derechos reservados. Ver archivo [LICENSE](LICENSE) para condiciones de uso.
+
+Queda prohibida la copia, distribucion, modificacion o uso no autorizado de este
+software sin autorizacion escrita previa de RDP S.A.
+
+---
+
+RDP S.A. — Parqueos Esquipulas, Guatemala | Mayo 2026
