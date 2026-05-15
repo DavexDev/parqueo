@@ -346,10 +346,15 @@
       const optimistic = { id: 'opt-' + Date.now(), sender_id: currentUserId, receiver_id: chatWithId, contenido: texto, created_at: new Date().toISOString(), leido: false };
       appendMsg(optimistic, true);
 
-      const { error } = await window.rdpSupabase.sendMessage({ sender_id: currentUserId, receiver_id: chatWithId, contenido: texto });
+      const { data: sent, error } = await window.rdpSupabase.sendMessage({ sender_id: currentUserId, receiver_id: chatWithId, contenido: texto });
       if (error) {
         document.querySelector(`[data-opt="${optimistic.id}"]`)?.remove();
       } else {
+        // Reemplazar mensaje optimista con el real (ID correcto)
+        const optEl = document.querySelector(`[data-opt="${optimistic.id}"]`);
+        if (optEl && sent) optEl.dataset.opt = sent.id;
+        // Broadcast al receptor via canal compartido (tiempo real)
+        if (convSub && sent) convSub.sendBroadcast(sent);
         // Notificar al destinatario vía push broadcast
         if (window.rdpPush) {
           window.rdpPush.notify(chatWithId, `Nuevo mensaje de ${user.nombre}`, texto.substring(0, 80), `messages.html?chat=${currentUserId}`).catch(() => {});

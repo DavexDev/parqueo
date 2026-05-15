@@ -423,17 +423,12 @@
   // ── Suscripción por conversación (WebSocket bidireccional + typing broadcast) ──
   function subscribeToConversation(userId, otherUserId, onMessage, onTyping) {
     const client = getClient();
-    if (!client) return { unsubscribe: () => {}, sendTyping: () => {} };
+    if (!client) return { unsubscribe: () => {}, sendTyping: () => {}, sendBroadcast: () => {} };
     const convKey = [userId, otherUserId].sort().join('_');
     const channel = client
       .channel(`rdp_conv_${convKey}`, { config: { broadcast: { self: false } } })
-      .on('postgres_changes', {
-        event: 'INSERT',
-        schema: 'public',
-        table: 'messages',
-        filter: `sender_id=eq.${otherUserId}`
-      }, payload => {
-        if (payload.new.receiver_id === userId) onMessage(payload.new);
+      .on('broadcast', { event: 'rdp_message' }, ({ payload }) => {
+        if (payload?.msg && payload.msg.sender_id !== userId) onMessage(payload.msg);
       })
       .on('broadcast', { event: 'rdp_typing' }, () => {
         if (onTyping) onTyping();
@@ -441,7 +436,8 @@
       .subscribe();
     return {
       unsubscribe: () => client.removeChannel(channel),
-      sendTyping: () => channel.send({ type: 'broadcast', event: 'rdp_typing', payload: { from: userId } })
+      sendTyping: () => channel.send({ type: 'broadcast', event: 'rdp_typing', payload: { from: userId } }),
+      sendBroadcast: (msg) => channel.send({ type: 'broadcast', event: 'rdp_message', payload: { msg } })
     };
   }
 
