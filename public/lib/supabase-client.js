@@ -197,7 +197,7 @@
     if (!client) return { data: [], error: null };
     return client
       .from('reservations')
-      .select('*, parkings(nombre, direccion, lat, lng)')
+      .select('*, parkings(id, nombre, direccion, lat, lng, anfitrion_id, profiles!anfitrion_id(nombre))')
       .eq('usuario_id', userId)
       .order('created_at', { ascending: false });
   }

@@ -33,13 +33,16 @@
     </div>
   </div>
 
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
   <script src="app.js"></script>
+  <script src="lib/supabase-client.js"></script>
   <script>
     const user = requireLogin(['visitante', 'anfitrion']);
     if (!user) throw new Error('No session');
     const currentUserId = user.id;
     const currentRol = user.rol;
     let chatWithId = null;
+    let unsubscribeMessages = null;
 
     document.addEventListener('DOMContentLoaded', () => {
       renderNavbar();
@@ -50,6 +53,63 @@
     });
 
     function cargarContactos() {
+      if (window.rdpSupabase?.isConfigured) {
+        window.rdpSupabase.getConversations(currentUserId)
+          .then(({ data, error }) => {
+            const msgs = data || [];
+            const contactMap = {};
+            msgs.forEach(m => {
+              const otherId = m.sender_id === currentUserId ? m.receiver_id : m.sender_id;
+              const otherProfile = m.sender_id === currentUserId ? m.receiver : m.sender;
+              if (!contactMap[otherId] && otherProfile) {
+                contactMap[otherId] = { id: otherId, nombre: otherProfile.nombre, foto: otherProfile.foto_url };
+              }
+            });
+            renderContactos(Object.values(contactMap));
+
+            // Activar chat por URL param
+            const params = new URLSearchParams(window.location.search);
+            if (params.get('chat')) {
+              chatWithId = params.get('chat');
+              cargarChat();
+              document.getElementById('formMsg').style.display = 'flex';
+            }
+          });
+        return;
+      }
+      cargarContactosExpress();
+    }
+
+    function renderContactos(contactos) {
+      const cont = document.getElementById('contactos');
+      cont.innerHTML = '';
+      if (contactos.length === 0) {
+        cont.innerHTML = '<div class="text-muted small p-3">No hay contactos disponibles</div>';
+        return;
+      }
+      contactos.forEach(u => {
+        cont.innerHTML += `
+          <div class="contact-item" data-id="${u.id}">
+            <div class="d-flex align-items-center gap-2">
+              <span class="icon-only" style="font-size:1.2rem;"><i class="bi bi-person-circle"></i></span>
+              <div>
+                <div class="fw-bold">${u.nombre || 'Usuario'}</div>
+              </div>
+            </div>
+          </div>`;
+      });
+      cont.querySelectorAll('.contact-item').forEach(btn => {
+        btn.addEventListener('click', function() {
+          chatWithId = this.dataset.id;
+          cargarChat();
+          document.getElementById('formMsg').style.display = 'flex';
+          cont.querySelectorAll('.contact-item').forEach(b => b.classList.remove('active'));
+          this.classList.add('active');
+        });
+      });
+    }
+
+    function cargarContactosExpress() {
       fetch('/api/messages?userId=' + currentUserId)
         .then(r => r.json())
         .then(msgs => {
@@ -114,6 +174,33 @@
 
     function cargarChat() {
       if (!chatWithId) return;
+
+      // Cancelar suscripción previa
+      if (unsubscribeMessages) { unsubscribeMessages(); unsubscribeMessages = null; }
+
+      if (window.rdpSupabase?.isConfigured) {
+        const client = window.rdpSupabase.getClient();
+        client.from('messages')
+          .select('*, sender:profiles!sender_id(nombre), receiver:profiles!receiver_id(nombre)')
+          .or(`and(sender_id.eq.${currentUserId},receiver_id.eq.${chatWithId}),and(sender_id.eq.${chatWithId},receiver_id.eq.${currentUserId})`)
+          .is('deleted_at', null)
+          .order('created_at', { ascending: true })
+          .then(({ data }) => renderMensajes(data || []));
+
+        // Marcar como leído
+        client.from('messages')
+          .update({ leido: true, leido_at: new Date().toISOString() })
+          .eq('receiver_id', currentUserId)
+          .eq('sender_id', chatWithId)
+          .eq('leido', false);
+
+        // Realtime: nuevos mensajes
+        unsubscribeMessages = window.rdpSupabase.subscribeToMessages(currentUserId, (msg) => {
+          if (msg.sender_id === chatWithId) cargarChat();
+        });
+        return;
+      }
+
       fetch(`/api/messages/conversation?u1=${currentUserId}&u2=${chatWithId}`)
         .then(r => r.json())
         .then(msgs => {
@@ -134,10 +221,41 @@
         });
     }
 
+    function renderMensajes(msgs) {
+      const box = document.getElementById('chatBox');
+      box.innerHTML = '';
+      if (msgs.length === 0) {
+        box.innerHTML = '<div class="text-muted text-center" style="padding-top:3rem;">No hay mensajes aún. ¡Envía el primero!</div>';
+        return;
+      }
+      msgs.forEach(m => {
+        const esYo = m.sender_id === currentUserId;
+        box.innerHTML += `<div class="msg-bubble ${esYo ? 'msg-out' : 'msg-in'}">
+          <div>${m.contenido}</div>
+          <small class="text-muted" style="font-size:0.7rem;">${new Date(m.created_at).toLocaleString('es-GT')}</small>
+        </div>`;
+      });
+      box.scrollTop = box.scrollHeight;
+    }
+
     document.getElementById('formMsg').addEventListener('submit', function(e) {
       e.preventDefault();
       const texto = document.getElementById('textoMsg').value.trim();
       if (!texto || !chatWithId) return;
+
+      if (window.rdpSupabase?.isConfigured) {
+        window.rdpSupabase.sendMessage({
+          sender_id: currentUserId,
+          receiver_id: chatWithId,
+          contenido: texto
+        }).then(({ error }) => {
+          if (error) { document.getElementById('emailStatus').innerHTML = `<span class="text-danger">Error: ${error.message}</span>`; return; }
+          document.getElementById('textoMsg').value = '';
+          cargarChat();
+        });
+        return;
+      }
+
       fetch('/api/messages', {
         method: 'POST',
         headers: getHeaders(),
@@ -149,8 +267,6 @@
         cargarChat();
         if (resp.mensaje && resp.mensaje.emailEnviado) {
           document.getElementById('emailStatus').innerHTML = '<span class="text-success"><i class="bi bi-envelope-check-fill icon-inline"></i>Notificación enviada por email</span>';
-        } else if (resp.mensaje && resp.mensaje.emailError) {
-          document.getElementById('emailStatus').innerHTML = `<span class="text-warning">Email no enviado (demo): ${resp.mensaje.emailError}</span>`;
         } else {
           document.getElementById('emailStatus').innerHTML = '<span class="text-muted">Email no enviado (modo demo)</span>';
         }

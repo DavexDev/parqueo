@@ -101,7 +101,11 @@
       <div class="form-section">
         <label>¿Qué tan buena fue tu experiencia?</label>
         <div class="rating-input" id="ratingInput">
-          ${[1,2,3,4,5].map(i => `<span class="star" data-value="${i}" onclick="selectRating(${i})">★</span>`).join('')}
+          <span class="star" data-value="1" onclick="selectRating(1)">★</span>
+          <span class="star" data-value="2" onclick="selectRating(2)">★</span>
+          <span class="star" data-value="3" onclick="selectRating(3)">★</span>
+          <span class="star" data-value="4" onclick="selectRating(4)">★</span>
+          <span class="star" data-value="5" onclick="selectRating(5)">★</span>
         </div>
         <p style="font-size:0.85rem;color:var(--text-muted);margin-top:0.5rem;display:none;" id="ratingText"></p>
       </div>
@@ -129,36 +133,91 @@
     <!-- Reseñas -->
     <h3 style="font-size:1.2rem;font-weight:700;margin-bottom:1rem;">Todas las reseñas</h3>
     <div id="reviewsList">
-      ${generateMockReviews()}
+      <div class="text-center text-muted py-3">Cargando reseñas...</div>
     </div>
   </div>
 
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
   <script src="app.js"></script>
+  <script src="lib/supabase-client.js"></script>
   <script>
     let ratingSeleccionado = 0;
     let parkingId = null;
+    let reservaId = null;
 
     document.addEventListener('DOMContentLoaded', () => {
       requireLogin();
       renderNavbar();
       renderBottomBar('reviews');
-      
-      // Obtener parkingId de URL
+
       const params = new URLSearchParams(window.location.search);
-      parkingId = params.get('id') || 1;
-      
+      parkingId = params.get('id');
+      reservaId = params.get('reserva') || null;
+
+      if (!parkingId) {
+        document.querySelector('.page-container').innerHTML = '<div class="alert alert-warning">No se especificó el parqueo. <a href="parkings.html">Volver al listado</a></div>';
+        return;
+      }
+
       cargarParqueo(parkingId);
+      cargarReseñas(parkingId);
+
+      // Ocultar formulario si no viene de una reserva
+      if (!reservaId) {
+        document.querySelector('.review-form').innerHTML = '<div class="alert alert-info"><i class="bi bi-info-circle icon-inline"></i>Solo puedes reseñar parqueos donde hayas tenido una reserva finalizada. <a href="reservations.html">Ver mis reservas</a></div>';
+      }
     });
 
     function cargarParqueo(id) {
-      // Mock: solo para demo
+      if (window.rdpSupabase?.isConfigured) {
+        window.rdpSupabase.getParkingById(id)
+          .then(({ data, error }) => {
+            if (data) {
+              document.getElementById('parkingName').textContent = data.nombre || 'Parqueo';
+            }
+          });
+        return;
+      }
       fetch(`/api/parkings/${id}`)
         .then(r => r.json())
-        .then(p => {
-          document.getElementById('parkingName').textContent = p.nombre || 'Parqueo';
-        })
-        .catch(() => {
-          // Si falla, dejar el nombre por defecto
+        .then(p => { document.getElementById('parkingName').textContent = p.nombre || 'Parqueo'; })
+        .catch(() => {});
+    }
+
+    function cargarReseñas(id) {
+      if (!window.rdpSupabase?.isConfigured) {
+        document.getElementById('reviewsList').innerHTML = generarReseñasMock();
+        return;
+      }
+      window.rdpSupabase.getParkingRatings(id)
+        .then(({ data, error }) => {
+          const cont = document.getElementById('reviewsList');
+          if (error || !data || data.length === 0) {
+            cont.innerHTML = '<div class="text-center text-muted py-3"><i class="bi bi-star" style="font-size:2rem;display:block;margin-bottom:0.5rem;"></i>Aún no hay reseñas. ¡Sé el primero!</div>';
+            return;
+          }
+          // Actualizar stats
+          const promedio = (data.reduce((s, r) => s + r.estrellas, 0) / data.length).toFixed(1);
+          const recomendados = data.filter(r => r.estrellas >= 4).length;
+          const pct = Math.round(recomendados / data.length * 100);
+          document.getElementById('parkingRating').innerHTML = `<i class="bi bi-star-fill" style="color:#ffc107;"></i> <strong>${promedio}</strong>`;
+          document.getElementById('reviewCount').textContent = `${data.length} reseñas`;
+          document.querySelectorAll('.stat-number')[0].textContent = promedio;
+          document.querySelectorAll('.stat-number')[1].textContent = data.length;
+          document.querySelectorAll('.stat-number')[2].textContent = pct + '%';
+
+          cont.innerHTML = data.map(r => `
+            <div class="review-card">
+              <div class="review-header">
+                <div>
+                  <div class="review-author"><i class="bi bi-person-circle"></i> ${r.profiles?.nombre || 'Usuario'}</div>
+                  <div class="review-meta">${new Date(r.created_at).toLocaleDateString('es-GT')}</div>
+                </div>
+                <div class="review-rating">${'★'.repeat(r.estrellas)}${'☆'.repeat(5 - r.estrellas)}</div>
+              </div>
+              ${r.comentario ? `<p class="review-text">${r.comentario}</p>` : ''}
+            </div>
+          `).join('');
         });
     }
 
@@ -198,37 +257,47 @@
         return;
       }
 
-      const texto = document.getElementById('reviewText').value;
-      const recomendado = document.getElementById('recommend').checked;
+      const comentario = document.getElementById('reviewText').value.trim();
+      const user = getUser();
 
-      // Mock: guardar en localStorage para demo
-      const reseña = {
-        id: Date.now(),
-        parkingId: parkingId,
-        rating: ratingSeleccionado,
-        text: texto || '(sin comentario)',
-        recommend: recomendado,
-        author: getUser().nombre,
-        date: new Date().toLocaleDateString('es-GT')
-      };
+      if (window.rdpSupabase?.isConfigured) {
+        if (!reservaId) {
+          alert('Solo puedes reseñar parqueos donde hayas tenido una reserva finalizada.');
+          return;
+        }
+        window.rdpSupabase.createRating({
+          reserva_id: reservaId,
+          parking_id: parkingId,
+          usuario_id: user.id,
+          estrellas: ratingSeleccionado,
+          comentario: comentario || null
+        }).then(({ data, error }) => {
+          if (error) {
+            if (error.code === '42501') {
+              alert('Solo puedes reseñar parqueos con reserva finalizada.');
+            } else {
+              alert('Error al enviar: ' + error.message);
+            }
+            return;
+          }
+          alert('✓ ¡Gracias por tu reseña!');
+          document.querySelector('.review-form').innerHTML = '<div class="alert alert-success"><i class="bi bi-check-circle icon-inline"></i>Reseña enviada. ¡Gracias por tu opinión!</div>';
+          cargarReseñas(parkingId);
+        });
+        return;
+      }
 
-      const reseñas = JSON.parse(localStorage.getItem('reviews') || '[]');
-      reseñas.push(reseña);
-      localStorage.setItem('reviews', JSON.stringify(reseñas));
-
-      alert('✓ ¡Gracias por tu reseña!');
+      // Fallback: mostrar mensaje de demo
+      alert('✓ ¡Gracias por tu reseña! (modo demo)');
       location.reload();
     }
 
-    function generateMockReviews() {
+    function generarReseñasMock() {
       const reviews = [
         { author: 'Juan Morales', rating: 5, text: 'Excelente ubicación, muy seguro. El anfitrión respondió rápido.', date: '2 de enero' },
         { author: 'María García', rating: 4, text: 'Buen parqueo pero un poco estrecho para autos grandes.', date: '28 de diciembre' },
-        { author: 'Pedro López', rating: 5, text: 'Perfecto para visitar la Basílica, recomendado.', date: '20 de diciembre' },
-        { author: 'Ana Ruiz', rating: 4, text: 'Seguro y accesible. Volveré a usar.', date: '15 de diciembre' },
-        { author: 'Carlos Vega', rating: 5, text: 'Servicio muy profesional, anfitrión amable.', date: '10 de diciembre' }
+        { author: 'Pedro López', rating: 5, text: 'Perfecto para visitar la Basílica, recomendado.', date: '20 de diciembre' }
       ];
-
       return reviews.map(r => `
         <div class="review-card">
           <div class="review-header">
@@ -236,7 +305,7 @@
               <div class="review-author"><i class="bi bi-person-circle"></i> ${r.author}</div>
               <div class="review-meta">${r.date}</div>
             </div>
-            <div class="review-rating">${'★'.repeat(r.rating)}${'☆'.repeat(5-r.rating)}</div>
+            <div class="review-rating">${'★'.repeat(r.rating)}${'☆'.repeat(5 - r.rating)}</div>
           </div>
           <p class="review-text">${r.text}</p>
         </div>

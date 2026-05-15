@@ -40,7 +40,9 @@
     </div>
   </div>
 
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
   <script src="app.js"></script>
+  <script src="lib/supabase-client.js"></script>
   <script>
     let todasReservas = [];
     let filtroActual = 'todas';
@@ -70,6 +72,33 @@
 
     function cargarReservas() {
       const user = getUser();
+      if (window.rdpSupabase?.isConfigured) {
+        window.rdpSupabase.getUserReservations(user.id)
+          .then(({ data, error }) => {
+            if (error) throw error;
+            todasReservas = (data || []).map(r => ({
+              id: r.id,
+              parking_id: r.parking_id || r.parkings?.id,
+              parqueoNombre: r.parkings?.nombre || 'Parqueo',
+              anfitrionNombre: r.parkings?.profiles?.nombre || 'Sin especificar',
+              anfitrionId: r.parkings?.anfitrion_id,
+              fechaInicio: r.fecha_inicio,
+              fechaFin: r.fecha_fin,
+              precio: r.precio_total,
+              estado: r.estado,
+              tipo: r.tipo,
+              codigo_reserva: r.codigo_reserva,
+              metodo_pago: r.metodo_pago
+            }));
+            renderReservas();
+          })
+          .catch(() => cargarReservasExpress(user));
+        return;
+      }
+      cargarReservasExpress(user);
+    }
+
+    function cargarReservasExpress(user) {
       fetch(`/api/reservations?usuarioId=${user.id}`, { headers: getHeaders() })
         .then(r => r.json())
         .then(reservas => {
@@ -176,14 +205,19 @@
                 <i class="bi bi-eye"></i> Detalles
               </button>
               ${r.estado === 'pendiente' ? `
-                <button class="btn btn-outline-danger btn-sm" onclick="cancelarReserva(${r.id})">
+                <button class="btn btn-outline-danger btn-sm" onclick="cancelarReserva('${r.id}')">
                   <i class="bi bi-x-circle"></i> Cancelar
                 </button>
               ` : ''}
               ${r.estado === 'confirmada' || r.estado === 'pendiente' ? `
-                <button class="btn btn-outline-info btn-sm" onclick="contactarAnfitrion('${r.anfitrionNombre}', ${r.anfitrionId})">
+                <button class="btn btn-outline-info btn-sm" onclick="contactarAnfitrion('${r.anfitrionNombre}', '${r.anfitrionId}')">
                   <i class="bi bi-chat-dots"></i> Contactar
                 </button>
+              ` : ''}
+              ${r.estado === 'finalizada' ? `
+                <a href="reviews.html?id=${r.parking_id}&reserva=${r.id}" class="btn btn-outline-warning btn-sm">
+                  <i class="bi bi-star"></i> Reseñar
+                </a>
               ` : ''}
             </div>
           </div>
@@ -229,6 +263,16 @@
 
     function cancelarReserva(reservaId) {
       if (!confirm('¿Estás seguro? Esta acción no se puede deshacer.')) return;
+
+      if (window.rdpSupabase?.isConfigured) {
+        window.rdpSupabase.updateReservationStatus(reservaId, 'cancelada')
+          .then(({ error }) => {
+            if (error) { alert('Error al cancelar: ' + error.message); return; }
+            alert('Reserva cancelada');
+            cargarReservas();
+          });
+        return;
+      }
 
       fetch(`/api/reservations/${reservaId}`, {
         method: 'PUT',
