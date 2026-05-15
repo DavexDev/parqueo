@@ -32,6 +32,7 @@ function getHeaders() {
 }
 
 function logout() {
+  if (window.rdpSupabase?.signOut) window.rdpSupabase.signOut();
   localStorage.removeItem('parqueo_user');
   localStorage.removeItem('token');
   window.location.href = 'login.html';

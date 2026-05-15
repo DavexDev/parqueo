@@ -76,6 +76,8 @@
     </div>
   </div>
 
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
+  <script src="lib/supabase-client.js"></script>
   <script src="app.js"></script>
   <script>
     document.addEventListener('DOMContentLoaded', () => {
@@ -110,34 +112,69 @@
         `;
       }
 
-      // Stats rápidos desde API
-      fetch('/api/stats')
-        .then(r => r.json())
-        .then(d => {
-          if (!d.success) return;
-          const s = d.stats || {};
-          document.getElementById('statsRow').innerHTML = `
-            <div class="col-4">
-              <div class="stat-card-new blue text-center">
-                <div class="stat-number">${s.totalParqueos || '—'}</div>
-                <div class="stat-label">Parqueos</div>
+      // Stats desde Supabase (real) con fallback al API mock
+      async function cargarStats() {
+        if (window.rdpSupabase?.isConfigured) {
+          const client = window.rdpSupabase.getClient();
+          if (client) {
+            const [{ count: totalParqueos }, { count: totalReservas }, { count: disponibles }] = await Promise.all([
+              client.from('parkings').select('*', { count: 'exact', head: true }).is('deleted_at', null),
+              client.from('reservations').select('*', { count: 'exact', head: true }),
+              client.from('parkings').select('*', { count: 'exact', head: true }).eq('estado', 'activo').is('deleted_at', null)
+            ]);
+            document.getElementById('statsRow').innerHTML = `
+              <div class="col-4">
+                <div class="stat-card-new blue text-center">
+                  <div class="stat-number">${totalParqueos ?? '—'}</div>
+                  <div class="stat-label">Parqueos</div>
+                </div>
               </div>
-            </div>
-            <div class="col-4">
-              <div class="stat-card-new gold text-center">
-                <div class="stat-number">${s.totalReservas || '—'}</div>
-                <div class="stat-label">Reservas</div>
+              <div class="col-4">
+                <div class="stat-card-new gold text-center">
+                  <div class="stat-number">${totalReservas ?? '—'}</div>
+                  <div class="stat-label">Reservas</div>
+                </div>
               </div>
-            </div>
-            <div class="col-4">
-              <div class="stat-card-new green text-center">
-                <div class="stat-number">${s.disponibles || '—'}</div>
-                <div class="stat-label">Disponibles</div>
+              <div class="col-4">
+                <div class="stat-card-new green text-center">
+                  <div class="stat-number">${disponibles ?? '—'}</div>
+                  <div class="stat-label">Disponibles</div>
+                </div>
               </div>
-            </div>
-          `;
-        })
-        .catch(() => {});
+            `;
+            return;
+          }
+        }
+        // Fallback mock
+        fetch('/api/stats')
+          .then(r => r.json())
+          .then(d => {
+            if (!d.success) return;
+            const s = d.stats || {};
+            document.getElementById('statsRow').innerHTML = `
+              <div class="col-4">
+                <div class="stat-card-new blue text-center">
+                  <div class="stat-number">${s.totalParqueos || '—'}</div>
+                  <div class="stat-label">Parqueos</div>
+                </div>
+              </div>
+              <div class="col-4">
+                <div class="stat-card-new gold text-center">
+                  <div class="stat-number">${s.totalReservas || '—'}</div>
+                  <div class="stat-label">Reservas</div>
+                </div>
+              </div>
+              <div class="col-4">
+                <div class="stat-card-new green text-center">
+                  <div class="stat-number">${s.disponibles || '—'}</div>
+                  <div class="stat-label">Disponibles</div>
+                </div>
+              </div>
+            `;
+          })
+          .catch(() => {});
+      }
+      cargarStats();
     });
   </script>
 </body>

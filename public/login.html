@@ -127,12 +127,13 @@
       await new Promise(r => setTimeout(r, 300));
       const session = await window.rdpSupabase.getSession();
       if (!session || !session.user) return;
+      const { data: profile } = await window.rdpSupabase.getProfile(session.user.id);
       setUser(
         {
-          id: session.user.id,
-          nombre: session.user.user_metadata?.full_name || session.user.email,
-          rol: 'visitante',
-          email: session.user.email
+          id:     session.user.id,
+          nombre: profile?.nombre || session.user.user_metadata?.full_name || session.user.email,
+          rol:    profile?.rol    || 'visitante',
+          email:  session.user.email
         },
         session.access_token
       );
