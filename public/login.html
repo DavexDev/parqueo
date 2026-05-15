@@ -57,7 +57,10 @@
         </div>
         <div class="mb-3">
           <label class="form-label">Contraseña</label>
-          <input type="password" class="form-control" id="loginPassword" placeholder="••••••" required autocomplete="current-password" minlength="6">
+          <div class="input-group">
+            <input type="password" class="form-control" id="loginPassword" placeholder="••••••" required autocomplete="current-password" minlength="6">
+            <button type="button" class="btn btn-outline-secondary" onclick="togglePassword('loginPassword',this)" tabindex="-1" style="border-color:#dee2e6;"><i class="bi bi-eye"></i></button>
+          </div>
         </div>
         <button type="submit" class="btn-gold" id="btnLogin">Entrar</button>
       </form>
@@ -83,6 +86,20 @@
             <option value="visitante">Visitante — busco parqueo</option>
             <option value="anfitrion">Anfitrión — ofrezco parqueo</option>
           </select>
+        </div>
+        <div class="mb-3">
+          <label class="form-label">Contraseña</label>
+          <div class="input-group">
+            <input type="password" class="form-control" id="regPassword" placeholder="Mínimo 6 caracteres" required minlength="6" autocomplete="new-password">
+            <button type="button" class="btn btn-outline-secondary" onclick="togglePassword('regPassword',this)" tabindex="-1" style="border-color:#dee2e6;"><i class="bi bi-eye"></i></button>
+          </div>
+        </div>
+        <div class="mb-3">
+          <label class="form-label">Confirmar contraseña</label>
+          <div class="input-group">
+            <input type="password" class="form-control" id="regPasswordConfirm" placeholder="Repite tu contraseña" required minlength="6" autocomplete="new-password">
+            <button type="button" class="btn btn-outline-secondary" onclick="togglePassword('regPasswordConfirm',this)" tabindex="-1" style="border-color:#dee2e6;"><i class="bi bi-eye"></i></button>
+          </div>
         </div>
         <button type="submit" class="btn-main" id="btnRegister">Crear cuenta</button>
         <p style="font-size:0.78rem;color:var(--text-muted);text-align:center;margin-top:0.75rem;line-height:1.5;">
@@ -156,51 +173,78 @@
         `<div class="alert-rdp-success"><i class="bi bi-check-circle-fill"></i> ${msg}</div>`;
     }
 
-    document.getElementById('formLogin').addEventListener('submit', function(e) {
+    function togglePassword(inputId, btn) {
+      const input = document.getElementById(inputId);
+      const icon = btn.querySelector('i');
+      if (input.type === 'password') {
+        input.type = 'text';
+        icon.className = 'bi bi-eye-slash';
+      } else {
+        input.type = 'password';
+        icon.className = 'bi bi-eye';
+      }
+    }
+
+    document.getElementById('formLogin').addEventListener('submit', async function(e) {
       e.preventDefault();
-      const email = document.getElementById('loginEmail').value.trim();
+      const email    = document.getElementById('loginEmail').value.trim();
       const password = document.getElementById('loginPassword').value;
       setLoading('btnLogin', true);
-      fetch('/api/login', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email, password })
-      })
-      .then(r => r.json())
-      .then(resp => {
-        if (resp.success) {
-          setUser(resp.user, resp.token);
-          window.location.href = 'index.html';
-        } else {
-          showError(resp.message || 'Credenciales incorrectas');
-          setLoading('btnLogin', false);
-        }
-      })
-      .catch(() => { showError('Error de conexión. Intenta de nuevo.'); setLoading('btnLogin', false); });
+      document.getElementById('estadoLogin').innerHTML = '';
+
+      const { data, error } = await window.rdpSupabase.signIn(email, password);
+      if (error) {
+        const msg = error.message.includes('Invalid login credentials')
+          ? 'Correo o contraseña incorrectos.'
+          : error.message;
+        showError(msg);
+        setLoading('btnLogin', false);
+        return;
+      }
+
+      const { data: profile } = await window.rdpSupabase.getProfile(data.user.id);
+      setUser({
+        id:     data.user.id,
+        nombre: profile?.nombre || data.user.email,
+        email:  data.user.email,
+        rol:    profile?.rol    || 'visitante'
+      }, data.session.access_token);
+      window.location.href = 'index.html';
     });
 
-    document.getElementById('formRegister').addEventListener('submit', function(e) {
+    document.getElementById('formRegister').addEventListener('submit', async function(e) {
       e.preventDefault();
-      const nombre = document.getElementById('regNombre').value.trim();
-      const email  = document.getElementById('regEmail').value.trim();
-      const rol    = document.getElementById('regRol').value;
+      const nombre   = document.getElementById('regNombre').value.trim();
+      const email    = document.getElementById('regEmail').value.trim();
+      const rol      = document.getElementById('regRol').value;
+      const password = document.getElementById('regPassword').value;
+      const confirm  = document.getElementById('regPasswordConfirm').value;
+      document.getElementById('estadoLogin').innerHTML = '';
+
+      if (password !== confirm) { showError('Las contraseñas no coinciden.'); return; }
       setLoading('btnRegister', true);
-      fetch('/api/register', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ nombre, email, rol })
-      })
-      .then(r => r.json())
-      .then(resp => {
-        if (resp.success) {
-          setUser(resp.user, resp.token);
-          window.location.href = 'index.html';
-        } else {
-          showError(resp.message || 'Error al registrar. El correo puede estar en uso.');
-          setLoading('btnRegister', false);
-        }
-      })
-      .catch(() => { showError('Error de conexión. Intenta de nuevo.'); setLoading('btnRegister', false); });
+
+      const { data, error } = await window.rdpSupabase.signUp(email, password, { nombre, rol });
+      if (error) {
+        showError(error.message);
+        setLoading('btnRegister', false);
+        return;
+      }
+
+      if (data.user && !data.session) {
+        showSuccess('Cuenta creada. Revisa tu correo para confirmar y luego inicia sesión.');
+        setLoading('btnRegister', false);
+        return;
+      }
+
+      const { data: profile } = await window.rdpSupabase.getProfile(data.user.id);
+      setUser({
+        id:     data.user.id,
+        nombre: profile?.nombre || nombre,
+        email:  data.user.email,
+        rol:    profile?.rol    || rol
+      }, data.session.access_token);
+      window.location.href = 'index.html';
     });
   </script>
 </body>
