@@ -157,6 +157,7 @@
         <div class="text-center mb-3">
           <small class="text-muted">Código de reserva</small>
           <div class="comprobante-codigo" id="codigoReserva">--------</div>
+          <div id="qrComprobante" class="mt-2" style="display:none;"><img id="qrImg" src="" alt="QR" style="width:120px;height:120px;border-radius:8px;border:1px solid #e5e7eb;"></div>
           <small class="text-muted">Muestra este código al anfitrion</small>
         </div>
         <hr>
@@ -383,6 +384,10 @@
 
       const codigo = reserva?.codigo_reserva || reserva?.id?.toString().slice(-8).toUpperCase() || '--------';
       document.getElementById('codigoReserva').textContent = codigo;
+      // QR code via free API (no npm needed)
+      const qrData = encodeURIComponent(`RDP:${codigo}`);
+      document.getElementById('qrImg').src = `https://api.qrserver.com/v1/create-qr-code/?size=120x120&data=${qrData}&color=0F172A&bgcolor=FFFFFF`;
+      document.getElementById('qrComprobante').style.display = '';
 
         const metodoLabels = { online:'En línea', llegada:'Al llegar', anticipo:'Con anticipo' };
       const metodo = document.querySelector('input[name="metodo_pago"]:checked')?.value || 'al_llegar';
