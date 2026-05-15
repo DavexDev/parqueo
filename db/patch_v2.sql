@@ -12,8 +12,9 @@ CREATE POLICY "memberships_host_update"
   ON memberships FOR UPDATE
   USING (anfitrion_id = auth.uid());
 
--- 2. Agregar reservas_mes a la vista admin_metrics
-CREATE OR REPLACE VIEW admin_metrics AS
+-- 2. Agregar reservas_mes y total_usuarios a la vista admin_metrics
+DROP VIEW IF EXISTS admin_metrics;
+CREATE VIEW admin_metrics AS
 SELECT
   (SELECT COUNT(*) FROM parkings WHERE deleted_at IS NULL)                                                AS total_parqueos,
   (SELECT COUNT(*) FROM parkings WHERE estado = 'activo' AND deleted_at IS NULL)                         AS parqueos_activos,
