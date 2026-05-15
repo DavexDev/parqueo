@@ -72,6 +72,10 @@ function renderNavbar() {
     if (window.rdpPush && user.id) {
       window.rdpPush.init(user.id).catch(() => {});
     }
+    // Tutorial interactivo de primer uso
+    if (window.rdpTutorial) {
+      window.rdpTutorial.init(user.rol);
+    }
   } else {
     nav.innerHTML = `
       ${brand}

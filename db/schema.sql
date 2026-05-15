@@ -410,7 +410,7 @@ CREATE TRIGGER trg_auth_user_created
 
 -- Calcular comisión 17% al confirmar reserva
 CREATE OR REPLACE FUNCTION calculate_commission()
-RETURNS TRIGGER LANGUAGE plpgsql AS $$
+RETURNS TRIGGER LANGUAGE plpgsql SECURITY DEFINER AS $$
 BEGIN
   IF NEW.estado = 'confirmada' AND OLD.estado = 'pendiente' THEN
     INSERT INTO commissions (reserva_id, anfitrion_id, precio_total, porcentaje, monto_comision, monto_anfitrion)

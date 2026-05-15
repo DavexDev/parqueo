@@ -780,3 +780,34 @@ body.dark-mode .navbar-parqueo { background: #000D1A !important; }
   box-shadow: var(--shadow);
   overflow: hidden;
 }
+
+/* ── Tutorial interactivo ─────────────────────────────────── */
+#rdp-tour-overlay {
+  position: fixed; inset: 0; z-index: 9990;
+  background: rgba(15,23,42,.55); backdrop-filter: blur(3px);
+  display: flex; align-items: flex-end; justify-content: center; padding: 1rem;
+}
+#rdp-tour-card {
+  background: #fff; border-radius: 20px; padding: 1.75rem 1.5rem 1.25rem;
+  width: 100%; max-width: 420px; box-shadow: 0 20px 60px rgba(15,23,42,.3);
+  animation: rdp-tour-in .25s cubic-bezier(.34,1.56,.64,1);
+}
+@keyframes rdp-tour-in { from { transform: translateY(48px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
+.rdp-tour-dots { display: flex; gap: .35rem; justify-content: center; margin-bottom: 1.25rem; }
+.rdp-tour-dot { width: 8px; height: 8px; border-radius: 99px; background: #e5e7eb; transition: all .25s; }
+.rdp-tour-dot.active { width: 22px; background: var(--rdp-navy); }
+.rdp-tour-icon { font-size: 2.4rem; color: var(--rdp-navy); text-align: center; margin-bottom: .6rem; }
+.rdp-tour-title { font-size: 1.08rem; font-weight: 800; color: var(--rdp-navy); text-align: center; margin-bottom: .45rem; }
+.rdp-tour-desc { font-size: .84rem; color: #4b5563; text-align: center; line-height: 1.6; margin-bottom: 1.25rem; }
+.rdp-tour-actions { display: flex; align-items: center; justify-content: space-between; gap: .5rem; }
+.rdp-tour-next { background: var(--rdp-navy); color: #fff; border: none; border-radius: 99px; padding: .5rem 1.3rem; font-weight: 700; font-size: .85rem; cursor: pointer; }
+.rdp-tour-finish { background: var(--rdp-gold); color: var(--rdp-navy); border: none; border-radius: 99px; padding: .5rem 1.3rem; font-weight: 700; font-size: .85rem; cursor: pointer; }
+.rdp-tour-ghost { background: transparent; border: 1.5px solid #e5e7eb; border-radius: 99px; padding: .45rem 1rem; font-size: .8rem; color: #6b7280; cursor: pointer; }
+.rdp-tour-skip { background: transparent; border: none; font-size: .78rem; color: #9ca3af; cursor: pointer; text-decoration: underline; padding: 0; }
+.rdp-tour-hl { outline: 3px solid var(--rdp-gold) !important; outline-offset: 3px; border-radius: 8px !important; animation: rdp-tour-pulse 1.2s ease-in-out infinite; }
+@keyframes rdp-tour-pulse { 0%,100% { outline-color: var(--rdp-gold); } 50% { outline-color: rgba(212,175,55,.3); } }
+body.dark-mode #rdp-tour-card { background: #1e2938; }
+body.dark-mode .rdp-tour-title { color: #f1f5f9; }
+body.dark-mode .rdp-tour-desc { color: #94a3b8; }
+body.dark-mode .rdp-tour-dot { background: #334155; }
+body.dark-mode .rdp-tour-ghost { border-color: #334155; color: #94a3b8; }
