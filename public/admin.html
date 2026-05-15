@@ -80,6 +80,12 @@
         <a class="nav-link" data-bs-toggle="tab" href="#tabParkings"><i class="bi bi-p-circle-fill icon-inline"></i>Parqueos</a>
       </li>
       <li class="nav-item">
+        <a class="nav-link position-relative" data-bs-toggle="tab" href="#tabPending">
+          <i class="bi bi-hourglass-split icon-inline"></i>Pendientes
+          <span id="pendienteBadge" class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger" style="font-size:.6rem;display:none;">0</span>
+        </a>
+      </li>
+      <li class="nav-item">
         <a class="nav-link" data-bs-toggle="tab" href="#tabReservations"><i class="bi bi-calendar-check-fill icon-inline"></i>Reservas</a>
       </li>
       <li class="nav-item">
@@ -108,6 +114,17 @@
         </div>
       </div>
 
+      <!-- TAB: Pendientes de aprobación -->
+      <div class="tab-pane fade" id="tabPending">
+        <div class="tab-header d-flex align-items-center justify-content-between">
+          <h3><i class="bi bi-hourglass-split icon-inline"></i>Pendientes de aprobación</h3>
+          <button class="btn-ghost" style="padding:.4rem .8rem;font-size:.82rem;" onclick="cargarPendientes()"><i class="bi bi-arrow-clockwise icon-inline"></i>Actualizar</button>
+        </div>
+        <div id="listaPendientes">
+          <div class="text-center text-muted py-4">Cargando...</div>
+        </div>
+      </div>
+
       <!-- TAB: Reservas -->
       <div class="tab-pane fade" id="tabReservations">
         <div class="tab-header">
@@ -130,279 +147,241 @@
     </div>
   </div>
 
+  <!-- Modal: rechazar parqueo -->
+  <div class="modal fade" id="modalRechazo" tabindex="-1">
+    <div class="modal-dialog modal-dialog-centered">
+      <div class="modal-content" style="border-radius:16px;overflow:hidden;">
+        <div class="modal-header" style="background:var(--rdp-navy);">
+          <h5 class="modal-title text-white"><i class="bi bi-x-circle icon-inline"></i>Rechazar parqueo</h5>
+          <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+        </div>
+        <div class="modal-body">
+          <label class="form-label fw-semibold">Motivo del rechazo *</label>
+          <textarea id="motivoRechazo" class="form-control" rows="3" placeholder="Indica el motivo..."></textarea>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+          <button type="button" class="btn btn-danger" onclick="confirmarRechazo()"><i class="bi bi-x-circle icon-inline"></i>Rechazar</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
+  <script src="lib/supabase-client.js"></script>
   <script src="app.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
   <script>
-    let currentUser = null;
+    let adminUser = null, rechazarId = null;
 
     document.addEventListener('DOMContentLoaded', () => {
-      validateAdmin();
+      adminUser = requireLogin(['admin']);
+      if (!adminUser) return;
       renderNavbar();
-      renderBottomBar('admin');
+      document.getElementById('userInfo').innerHTML = `Admin: <b>${adminUser.nombre}</b>`;
       cargarMetricas();
       cargarUsuarios();
       cargarParqueos();
+      cargarPendientes();
       cargarReservas();
       cargarMensajes();
     });
 
-    function validateAdmin() {
-      const user = JSON.parse(localStorage.getItem('parqueo_user') || '{}');
-      const token = localStorage.getItem('token');
-      
-      if (!token || user.rol !== 'admin') {
-        alert('Acceso denegado. Solo administradores.');
-        window.location.href = 'login.html';
-        return;
+    // ── MÉTRICAS ──────────────────────────────────────────────────
+    async function cargarMetricas() {
+      if (!window.rdpSupabase?.isConfigured) return;
+      const { data: m } = await window.rdpSupabase.getAdminMetrics();
+      if (!m) return;
+      document.getElementById('metricas').innerHTML = `
+        <div class="col-6 col-md-3"><div class="stat-card-new blue"><div class="stat-number">${m.total_visitantes || 0}</div><div class="stat-label">Visitantes</div></div></div>
+        <div class="col-6 col-md-3"><div class="stat-card-new green"><div class="stat-number">${m.parqueos_activos || 0}<small style="font-size:.6em;opacity:.7;">/${m.total_parqueos||0}</small></div><div class="stat-label">Parqueos activos</div></div></div>
+        <div class="col-6 col-md-3"><div class="stat-card-new orange"><div class="stat-number">${m.total_reservas || 0}</div><div class="stat-label">Reservas</div></div></div>
+        <div class="col-6 col-md-3"><div class="stat-card-new purple"><div class="stat-number">Q${Number(m.ingresos_rdp_mes||0).toFixed(0)}</div><div class="stat-label">Ingresos este mes</div></div></div>`;
+      // Badge pendientes
+      if (m.parqueos_pendientes > 0) {
+        const b = document.getElementById('pendienteBadge');
+        b.textContent = m.parqueos_pendientes;
+        b.style.display = '';
       }
-      
-      currentUser = user;
-      document.getElementById('userInfo').innerHTML = `Conectado como: <b>${user.nombre}</b>`;
     }
 
+    // ── USUARIOS ─────────────────────────────────────────────────
+    async function cargarUsuarios() {
+      const cont = document.getElementById('listaUsuarios');
+      if (!window.rdpSupabase?.isConfigured) { cont.innerHTML = '<div class="text-muted p-3">Requiere Supabase configurado.</div>'; return; }
+      const { data: users } = await window.rdpSupabase.getAdminUsers();
+      cont.innerHTML = '';
+      if (!users?.length) { cont.innerHTML = '<div class="text-center text-muted py-4">Sin usuarios</div>'; return; }
+      users.forEach(u => {
+        const rolColor = { admin: '#0F172A', anfitrion: '#1565C0', visitante: '#2e7d32' }[u.rol] || '#666';
+        cont.innerHTML += `
+          <div class="list-item">
+            <div class="list-item-info">
+              <div class="list-item-title"><i class="bi bi-person-circle icon-inline"></i>${esc(u.nombre)}</div>
+              <div class="list-item-meta">${esc(u.email||'')} · <span class="badge-rol" style="background:${rolColor};color:#fff;">${u.rol}</span></div>
+            </div>
+            <div class="list-item-actions">
+              ${u.rol !== 'admin' ? `<button class="btn btn-outline-danger btn-sm" onclick="eliminarUsuario('${u.id}')"><i class="bi bi-trash"></i></button>` : ''}
+            </div>
+          </div>`;
+      });
+    }
+
+    async function eliminarUsuario(id) {
+      if (!confirm('¿Desactivar este usuario?')) return;
+      await window.rdpSupabase.deleteUser(id);
+      cargarUsuarios(); cargarMetricas();
+    }
+
+    // ── PARQUEOS ──────────────────────────────────────────────────
+    async function cargarParqueos() {
+      const cont = document.getElementById('listaParqueos');
+      if (!window.rdpSupabase?.isConfigured) { cont.innerHTML = '<div class="text-muted p-3">Requiere Supabase.</div>'; return; }
+      const { data: parks } = await window.rdpSupabase.getAdminParkings();
+      cont.innerHTML = '';
+      if (!parks?.length) { cont.innerHTML = '<div class="text-center text-muted py-4">Sin parqueos</div>'; return; }
+      parks.forEach(p => {
+        const estadoColor = { activo: '#2e7d32', rechazado: '#c62828', pendiente_aprobacion: '#e65100' }[p.estado] || '#666';
+        cont.innerHTML += `
+          <div class="list-item">
+            <div class="list-item-info">
+              <div class="list-item-title"><i class="bi bi-p-circle-fill icon-inline"></i>${esc(p.nombre)} ${p.is_featured ? '<i class="bi bi-star-fill" style="color:#D4AF37;"></i>' : ''}</div>
+              <div class="list-item-meta">${esc(p.direccion||'')} · Anfitrión: <b>${esc(p.anfitrion_nombre||'')}</b></div>
+              <div style="margin-top:.35rem;"><span class="badge-tipo" style="background:${estadoColor};color:#fff;">${p.estado}</span></div>
+            </div>
+            <div class="list-item-actions">
+              <a href="parking-detail.html?id=${p.id}" class="btn btn-outline-primary btn-sm" target="_blank"><i class="bi bi-eye"></i></a>
+              ${p.estado === 'pendiente_aprobacion' ? `<button class="btn btn-success btn-sm" onclick="aprobar('${p.id}')"><i class="bi bi-check"></i></button><button class="btn btn-danger btn-sm" onclick="iniciarRechazo('${p.id}')"><i class="bi bi-x"></i></button>` : ''}
+            </div>
+          </div>`;
+      });
+    }
+
+    // ── PENDIENTES ────────────────────────────────────────────────
+    async function cargarPendientes() {
+      const cont = document.getElementById('listaPendientes');
+      if (!window.rdpSupabase?.isConfigured) { cont.innerHTML = '<div class="text-muted p-3">Requiere Supabase.</div>'; return; }
+      const { data: parks } = await window.rdpSupabase.getAdminParkings();
+      const pendientes = (parks || []).filter(p => p.estado === 'pendiente_aprobacion');
+      cont.innerHTML = '';
+      if (!pendientes.length) {
+        cont.innerHTML = '<div class="text-center py-5"><i class="bi bi-check-circle" style="font-size:2rem;color:#2e7d32;"></i><p class="mt-2 text-muted">No hay parqueos pendientes</p></div>';
+        return;
+      }
+      pendientes.forEach(p => {
+        const precio = p.precio_hora ?? p.precio;
+        const tipos = Array.isArray(p.tipos_vehiculo) ? p.tipos_vehiculo.join(', ') : '—';
+        cont.innerHTML += `
+          <div class="list-item" style="border-left-color:#e65100;flex-direction:column;align-items:stretch;gap:.75rem;">
+            <div class="d-flex align-items-start gap-3">
+              ${p.foto_principal ? `<img src="${p.foto_principal}" style="width:70px;height:60px;object-fit:cover;border-radius:8px;flex-shrink:0;">` : `<div style="width:70px;height:60px;background:#f3f4f6;border-radius:8px;display:flex;align-items:center;justify-content:center;flex-shrink:0;"><i class="bi bi-p-circle" style="color:#9ca3af;font-size:1.5rem;"></i></div>`}
+              <div style="flex:1;min-width:0;">
+                <div class="fw-bold" style="color:var(--rdp-navy);">${esc(p.nombre)}</div>
+                <small class="text-muted d-block"><i class="bi bi-geo-alt-fill icon-inline"></i>${esc(p.direccion||'')}</small>
+                <small class="text-muted d-block">Anfitrión: <b>${esc(p.anfitrion_nombre||'')}</b></small>
+                <small class="text-muted d-block">Tipos: ${esc(tipos)} · Cap: ${p.capacidad} · ${precio != null ? `Q${precio}/hr` : '—'}</small>
+                ${p.descripcion ? `<small class="d-block mt-1" style="color:#374151;">${esc(p.descripcion)}</small>` : ''}
+              </div>
+            </div>
+            <div class="d-flex gap-2 justify-content-end">
+              <a href="parking-detail.html?id=${p.id}" class="btn-ghost" style="padding:.4rem .85rem;font-size:.82rem;" target="_blank"><i class="bi bi-eye icon-inline"></i>Ver detalle</a>
+              <button class="btn-ghost" style="padding:.4rem .85rem;font-size:.82rem;color:#c62828;border-color:#c62828;" onclick="iniciarRechazo('${p.id}')"><i class="bi bi-x-circle icon-inline"></i>Rechazar</button>
+              <button class="btn-main" style="padding:.4rem .85rem;font-size:.82rem;" onclick="aprobar('${p.id}')"><i class="bi bi-check-circle icon-inline"></i>Aprobar</button>
+            </div>
+          </div>`;
+      });
+    }
+
+    async function aprobar(id) {
+      if (!confirm('¿Aprobar este parqueo? Quedará visible para todos los usuarios.')) return;
+      const { error } = await window.rdpSupabase.approveParking(id, adminUser.id);
+      if (error) { alert('Error: ' + error.message); return; }
+      cargarPendientes(); cargarParqueos(); cargarMetricas();
+    }
+
+    function iniciarRechazo(id) {
+      rechazarId = id;
+      document.getElementById('motivoRechazo').value = '';
+      new bootstrap.Modal(document.getElementById('modalRechazo')).show();
+    }
+
+    async function confirmarRechazo() {
+      const motivo = document.getElementById('motivoRechazo').value.trim();
+      if (!motivo) { alert('Ingresa el motivo del rechazo'); return; }
+      const { error } = await window.rdpSupabase.rejectParking(rechazarId, motivo);
+      if (error) { alert('Error: ' + error.message); return; }
+      bootstrap.Modal.getInstance(document.getElementById('modalRechazo')).hide();
+      rechazarId = null;
+      cargarPendientes(); cargarParqueos(); cargarMetricas();
+    }
+
+    // ── RESERVAS ─────────────────────────────────────────────────
+    async function cargarReservas() {
+      const cont = document.getElementById('listaReservas');
+      if (!window.rdpSupabase?.isConfigured) { cont.innerHTML = '<div class="text-muted p-3">Requiere Supabase.</div>'; return; }
+      const { data: reservas } = await window.rdpSupabase.getAdminReservations();
+      cont.innerHTML = '';
+      if (!reservas?.length) { cont.innerHTML = '<div class="text-center text-muted py-4">Sin reservas</div>'; return; }
+      reservas.forEach(r => {
+        const estadoColor = { confirmada:'#2e7d32', cancelada:'#c62828', pendiente:'#e65100', finalizada:'#1565C0' }[r.estado] || '#666';
+        cont.innerHTML += `
+          <div class="list-item">
+            <div class="list-item-info">
+              <div class="list-item-title"><i class="bi bi-calendar-event icon-inline"></i>${esc(r.parking?.nombre || '—')}</div>
+              <div class="list-item-meta">Usuario: <b>${esc(r.usuario?.nombre || '—')}</b> · ${r.tipo || 'hora'} · Q${r.precio_total||0}</div>
+              <div style="margin-top:.35rem;"><span class="badge-tipo" style="background:${estadoColor};color:#fff;">${r.estado}</span></div>
+            </div>
+            <div class="list-item-actions">
+              <select class="form-select form-select-sm" style="width:auto;" onchange="cambiarEstadoReserva('${r.id}', this.value)">
+                ${['pendiente','confirmada','finalizada','cancelada'].map(s => `<option value="${s}" ${r.estado===s?'selected':''}>${s}</option>`).join('')}
+              </select>
+            </div>
+          </div>`;
+      });
+    }
+
+    async function cambiarEstadoReserva(id, estado) {
+      await window.rdpSupabase.updateReservationStatus(id, estado);
+      cargarReservas(); cargarMetricas();
+    }
+
+    // ── MENSAJES ─────────────────────────────────────────────────
+    async function cargarMensajes() {
+      const cont = document.getElementById('listaMensajes');
+      if (!window.rdpSupabase?.isConfigured) { cont.innerHTML = '<div class="text-muted p-3">Requiere Supabase.</div>'; return; }
+      const client = window.rdpSupabase.getClient();
+      const { data: msgs } = await client.from('messages')
+        .select('*, sender:profiles!sender_id(nombre), receiver:profiles!receiver_id(nombre)')
+        .is('deleted_at', null).order('created_at', { ascending: false }).limit(50);
+      cont.innerHTML = '';
+      if (!msgs?.length) { cont.innerHTML = '<div class="text-center text-muted py-4">Sin mensajes</div>'; return; }
+      msgs.forEach(m => {
+        const leido = m.read_at != null;
+        const icono = leido ? '<i class="bi bi-check-circle-fill" style="color:#2e7d32;"></i>' : '<i class="bi bi-hourglass-split" style="color:#e65100;"></i>';
+        const texto = esc(m.content || '');
+        cont.innerHTML += `
+          <div class="list-item" style="border-left-color:var(--rdp-navy);">
+            <div class="list-item-info">
+              <div class="list-item-title"><i class="bi bi-chat-dots icon-inline"></i><b>${esc(m.sender?.nombre||'?')}</b> → ${esc(m.receiver?.nombre||'?')}</div>
+              <div class="list-item-meta">"${texto.substring(0,80)}${texto.length>80?'…':''}"</div>
+              <div class="list-item-meta">${new Date(m.created_at).toLocaleString('es-GT')}</div>
+            </div>
+            <div>${icono}</div>
+          </div>`;
+      });
+    }
+
+    // ── HELPERS ───────────────────────────────────────────────────
     function logout() {
+      localStorage.removeItem('rdp_user');
       localStorage.removeItem('parqueo_user');
       localStorage.removeItem('token');
       window.location.href = 'login.html';
     }
 
-    function getHeaders() {
-      return { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + localStorage.getItem('token') };
-    }
-
-    // ===== USUARIOS =====
-    function cargarUsuarios() {
-      fetch('/api/admin/users', { headers: getHeaders() })
-        .then(r => r.json())
-        .then(users => {
-          const cont = document.getElementById('listaUsuarios');
-          cont.innerHTML = '';
-          if (users.length === 0) {
-            cont.innerHTML = '<div class="text-center text-muted py-4">No hay usuarios</div>';
-            return;
-          }
-          users.forEach(u => {
-            const badgeClass = u.rol === 'admin' ? 'badge-admin' : (u.rol === 'anfitrion' ? 'badge-anfitrion' : 'badge-visitante');
-            cont.innerHTML += `
-              <div class="list-item">
-                <div class="list-item-info">
-                  <div class="list-item-title"><i class="bi bi-person-circle icon-inline"></i>${u.nombre}</div>
-                  <div class="list-item-meta">${u.email} · <span class="badge-rol ${badgeClass}">${u.rol}</span></div>
-                </div>
-                <div class="list-item-actions">
-                  <button class="btn btn-outline-danger btn-sm" onclick="eliminarUsuario(${u.id})"><i class="bi bi-trash"></i>Eliminar</button>
-                </div>
-              </div>
-            `;
-          });
-        })
-        .catch(e => console.error('Error cargando usuarios:', e));
-    }
-
-    function eliminarUsuario(id) {
-      if (!confirm('¿Eliminar usuario? Esta acción no se puede deshacer.')) return;
-      fetch('/api/admin/users/' + id, { method: 'DELETE', headers: getHeaders() })
-        .then(r => r.json())
-        .then(resp => {
-          if (resp.success) {
-            cargarUsuarios();
-            cargarMetricas();
-            alert('Usuario eliminado');
-          }
-        })
-        .catch(e => alert('Error: ' + e));
-    }
-
-    // ===== PARQUEOS =====
-    function cargarParqueos() {
-      fetch('/api/admin/parkings', { headers: getHeaders() })
-        .then(r => r.json())
-        .then(parks => {
-          const cont = document.getElementById('listaParqueos');
-          cont.innerHTML = '';
-          if (parks.length === 0) {
-            cont.innerHTML = '<div class="text-center text-muted py-4">No hay parqueos</div>';
-            return;
-          }
-          parks.forEach(p => {
-            const disponibilidad = p.disponible ? '<span class="parking-availability"><i class="bi bi-check-circle-fill"></i>Disponible</span>' : '<span style="color:#c62828;">Ocupado</span>';
-            cont.innerHTML += `
-              <div class="list-item">
-                <div class="list-item-info">
-                  <div class="list-item-title"><i class="bi bi-p-circle-fill icon-inline"></i>${p.nombre}</div>
-                  <div class="list-item-meta">${p.direccion} · Anfitrión: <b>${p.anfitrionNombre}</b></div>
-                  <div style="margin-top:0.5rem;display:flex;gap:0.5rem;">
-                    <span class="badge-tipo">${p.tipo}</span>
-                    <span class="badge-precio">Q${p.precio}</span>
-                    ${disponibilidad}
-                  </div>
-                </div>
-                <div class="list-item-actions">
-                  <button class="btn btn-outline-danger btn-sm" onclick="eliminarParqueo(${p.id})"><i class="bi bi-trash"></i>Eliminar</button>
-                </div>
-              </div>
-            `;
-          });
-        })
-        .catch(e => console.error('Error cargando parqueos:', e));
-    }
-
-    function eliminarParqueo(id) {
-      if (!confirm('¿Eliminar parqueo? Los datos se ocultarán pero no se perderán.')) return;
-      fetch('/api/admin/parkings/' + id, { method: 'DELETE', headers: getHeaders() })
-        .then(r => r.json())
-        .then(resp => {
-          if (resp.success) {
-            cargarParqueos();
-            cargarMetricas();
-            alert('Parqueo eliminado');
-          }
-        })
-        .catch(e => alert('Error: ' + e));
-    }
-
-    // ===== RESERVAS =====
-    function cargarReservas() {
-      fetch('/api/admin/reservations', { headers: getHeaders() })
-        .then(r => r.json())
-        .then(reservas => {
-          const cont = document.getElementById('listaReservas');
-          cont.innerHTML = '';
-          if (reservas.length === 0) {
-            cont.innerHTML = '<div class="text-center text-muted py-4">No hay reservas</div>';
-            return;
-          }
-          reservas.forEach(r => {
-            const badgeEstado = getBadgeEstado(r.estado);
-            cont.innerHTML += `
-              <div class="list-item">
-                <div class="list-item-info">
-                  <div class="list-item-title"><i class="bi bi-calendar-event icon-inline"></i>${r.parqueoNombre}</div>
-                  <div class="list-item-meta">Usuario: <b>${r.usuarioNombre}</b> · Fecha: ${r.fechaInicio || r.fecha}</div>
-                  <div style="margin-top:0.5rem;">
-                    <span class="badge-estado ${r.estado}">${r.estado.charAt(0).toUpperCase() + r.estado.slice(1)}</span>
-                  </div>
-                </div>
-                <div class="list-item-actions">
-                  <select class="form-select form-select-sm" style="width:auto;" onchange="cambiarEstado(${r.id}, this.value)" title="Cambiar estado">
-                    <option value="pendiente" ${r.estado === 'pendiente' ? 'selected' : ''}>Pendiente</option>
-                    <option value="confirmada" ${r.estado === 'confirmada' ? 'selected' : ''}>Confirmada</option>
-                    <option value="finalizada" ${r.estado === 'finalizada' ? 'selected' : ''}>Finalizada</option>
-                    <option value="cancelada" ${r.estado === 'cancelada' ? 'selected' : ''}>Cancelada</option>
-                  </select>
-                  <button class="btn btn-outline-primary btn-sm" onclick="notificarReserva(${r.id})"><i class="bi bi-envelope"></i>Notificar</button>
-                </div>
-              </div>
-            `;
-          });
-        })
-        .catch(e => console.error('Error cargando reservas:', e));
-    }
-
-    function cambiarEstado(id, estado) {
-      fetch('/api/admin/reservations/' + id, {
-        method: 'PUT',
-        headers: getHeaders(),
-        body: JSON.stringify({ estado })
-      })
-        .then(r => r.json())
-        .then(() => {
-          cargarReservas();
-          cargarMetricas();
-        })
-        .catch(e => alert('Error: ' + e));
-    }
-
-    function notificarReserva(id) {
-      fetch('/api/notify/reservation', {
-        method: 'POST',
-        headers: getHeaders(),
-        body: JSON.stringify({ reservaId: id })
-      })
-        .then(r => r.json())
-        .then(resp => {
-          if (resp.success) {
-            const detalles = resp.results.map(r => `${r.to}: ${r.sent ? '✓ Enviado' : '✗ ' + (r.error || 'Error')}`).join('\n');
-            alert('Notificaciones enviadas:\n' + detalles);
-          } else {
-            alert('Error al notificar');
-          }
-        })
-        .catch(e => alert('Error: ' + e));
-    }
-
-    // ===== MENSAJES =====
-    function cargarMensajes() {
-      fetch('/api/admin/messages', { headers: getHeaders() })
-        .then(r => r.json())
-        .then(msgs => {
-          const cont = document.getElementById('listaMensajes');
-          cont.innerHTML = '';
-          if (msgs.length === 0) {
-            cont.innerHTML = '<div class="text-center text-muted py-4">No hay mensajes</div>';
-            return;
-          }
-          msgs.slice(0, 50).forEach(m => {
-            const icono = m.leido ? '<i class="bi bi-check-circle-fill" style="color:#2e7d32;"></i>' : '<i class="bi bi-hourglass-split" style="color:#e65100;"></i>';
-            cont.innerHTML += `
-              <div class="list-item" style="border-left-color:var(--primary);">
-                <div class="list-item-info">
-                  <div class="list-item-title"><i class="bi bi-chat-dots icon-inline"></i><b>${m.deNombre}</b> → ${m.paraNombre}</div>
-                  <div class="list-item-meta">"${m.texto.substring(0, 60)}${m.texto.length > 60 ? '...' : ''}"</div>
-                  <div class="list-item-meta">Fecha: ${new Date(m.fecha).toLocaleString('es-GT')}</div>
-                </div>
-                <div>${icono}</div>
-              </div>
-            `;
-          });
-        })
-        .catch(e => console.error('Error cargando mensajes:', e));
-    }
-
-    // ===== MÉTRICAS =====
-    function cargarMetricas() {
-      fetch('/api/admin/metrics', { headers: getHeaders() })
-        .then(r => r.json())
-        .then(m => {
-          document.getElementById('metricas').innerHTML = `
-            <div class="col-6 col-md-3">
-              <div class="stat-card-new blue">
-                <div class="stat-number">${m.totalUsuarios}</div>
-                <div class="stat-label">Usuarios</div>
-              </div>
-            </div>
-            <div class="col-6 col-md-3">
-              <div class="stat-card-new green">
-                <div class="stat-number">${m.totalParqueos}</div>
-                <div class="stat-label">Parqueos</div>
-              </div>
-            </div>
-            <div class="col-6 col-md-3">
-              <div class="stat-card-new orange">
-                <div class="stat-number">${m.totalReservas}</div>
-                <div class="stat-label">Reservas</div>
-              </div>
-            </div>
-            <div class="col-6 col-md-3">
-              <div class="stat-card-new purple">
-                <div class="stat-number">${m.totalMensajes}</div>
-                <div class="stat-label">Mensajes</div>
-              </div>
-            </div>
-          `;
-        });
-    }
-
-    function getBadgeEstado(estado) {
-      const badges = {
-        'pendiente': 'pendiente',
-        'confirmada': 'confirmada',
-        'finalizada': 'finalizada',
-        'cancelada': 'cancelada'
-      };
-      return badges[estado] || 'pendiente';
+    function esc(s) {
+      return String(s || '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
     }
   </script>
 </body>
 </html>
-

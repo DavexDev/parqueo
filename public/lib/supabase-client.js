@@ -146,6 +146,60 @@
     return query;
   }
 
+  // ── Admin ─────────────────────────────────────────────────────
+
+  async function getAdminMetrics() {
+    const client = getClient();
+    if (!client) return { data: null, error: null };
+    return client.from('admin_metrics').select('*').single();
+  }
+
+  async function getAdminUsers() {
+    const client = getClient();
+    if (!client) return { data: [], error: null };
+    return client.from('profiles').select('*').order('created_at', { ascending: false });
+  }
+
+  async function getAdminParkings() {
+    const client = getClient();
+    if (!client) return { data: [], error: null };
+    return client.from('parkings_with_host').select('*').is('deleted_at', null).order('created_at', { ascending: false });
+  }
+
+  async function approveParking(id, adminId) {
+    const client = getClient();
+    if (!client) return { error: { message: 'No configurado' } };
+    return client.from('parkings').update({
+      estado: 'activo',
+      aprobado_por: adminId,
+      aprobado_at: new Date().toISOString()
+    }).eq('id', id);
+  }
+
+  async function rejectParking(id, motivo) {
+    const client = getClient();
+    if (!client) return { error: { message: 'No configurado' } };
+    return client.from('parkings').update({
+      estado: 'rechazado',
+      motivo_rechazo: motivo || 'No cumple los requisitos'
+    }).eq('id', id);
+  }
+
+  async function deleteUser(id) {
+    const client = getClient();
+    if (!client) return { error: { message: 'No configurado' } };
+    return client.from('profiles').update({ deleted_at: new Date().toISOString() }).eq('id', id);
+  }
+
+  async function getAdminReservations() {
+    const client = getClient();
+    if (!client) return { data: [], error: null };
+    return client.from('reservations')
+      .select('*, parking:parkings(nombre), usuario:profiles!usuario_id(nombre)')
+      .order('created_at', { ascending: false })
+      .limit(100);
+  }
+
   async function getParkingById(id) {
     const client = getClient();
     if (!client) return { data: null, error: null };
@@ -384,6 +438,14 @@
     getUserReservations,
     getHostReservations,
     updateReservationStatus,
+    // Admin
+    getAdminMetrics,
+    getAdminUsers,
+    getAdminParkings,
+    approveParking,
+    rejectParking,
+    deleteUser,
+    getAdminReservations,
     // Reseñas
     getParkingRatings,
     createRating,
