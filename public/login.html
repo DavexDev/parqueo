@@ -87,16 +87,23 @@
     // Manejar callback OAuth de Supabase (redirect desde Google)
     async function handleOAuthCallback() {
       if (!window.rdpSupabase?.isConfigured) return;
+      // Supabase v2 devuelve tokens en el hash después de OAuth
+      const hash = window.location.hash;
+      if (!hash.includes('access_token')) return;
+      // Esperar a que Supabase procese el hash
+      await new Promise(r => setTimeout(r, 300));
       const session = await window.rdpSupabase.getSession();
-      if (!session) return;
-      const { data: profileData } = await window.rdpSupabase.getProfile(session.user.id);
-      if (profileData) {
-        setUser(
-          { id: profileData.id, nombre: profileData.nombre || session.user.email, rol: profileData.rol || 'visitante', email: session.user.email },
-          session.access_token
-        );
-        window.location.href = 'index.html';
-      }
+      if (!session || !session.user) return;
+      setUser(
+        {
+          id: session.user.id,
+          nombre: session.user.user_metadata?.full_name || session.user.email,
+          rol: 'visitante',
+          email: session.user.email
+        },
+        session.access_token
+      );
+      window.location.href = 'index.html';
     }
 
     async function loginConGoogle() {

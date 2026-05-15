@@ -65,7 +65,7 @@
     return client.auth.signInWithOAuth({
       provider: 'google',
       options: {
-        redirectTo: redirectTo || window.location.origin + '/index.html',
+        redirectTo: redirectTo || window.location.origin + '/login.html',
         queryParams: { access_type: 'offline', prompt: 'consent' }
       }
     });
