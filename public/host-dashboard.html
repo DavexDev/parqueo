@@ -245,6 +245,7 @@
   <script>
     let misDatos = { parqueos: [], reservas: [] };
     let hostUser = null;
+    let calAnio = new Date().getFullYear(), calMes = new Date().getMonth(), calFiltroParking = null;
 
     document.addEventListener('DOMContentLoaded', async () => {
       hostUser = requireLogin(['visitante','anfitrion','admin']);
@@ -279,6 +280,7 @@
       renderReservas();
       actualizarStats();
       poblarSelectDestacar();
+      renderCalendario();
     }
 
     // ── PARQUEOS ──────────────────────────────────────────────────
@@ -439,6 +441,110 @@
       const { error } = await window.rdpSupabase.createIncident(hostUser.id, parkId, desc);
       if (error) { rdpAlert('No se pudo enviar la solicitud de destaque. Intenta nuevamente.', 'error'); return; }
       rdpAlert(`Solicitud enviada. Tu parqueo "${park?.nombre}" será destacado del ${desde} al ${hasta} (Q${costo}) una vez que RDP confirme el pago.`, 'success');
+    }
+
+    // ── CALENDARIO ────────────────────────────────────────────────
+    function renderCalendario() {
+      const cont = document.getElementById('calendario');
+      const reservasBase = calFiltroParking
+        ? misDatos.reservas.filter(r => (r.parking?.id || r.parking_id) === calFiltroParking)
+        : misDatos.reservas;
+      const reservasActivas = reservasBase.filter(r => r.estado !== 'cancelada');
+
+      const diasOcupados = new Set();
+      reservasActivas.forEach(r => {
+        if (!r.fecha_inicio) return;
+        const inicio = new Date(r.fecha_inicio);
+        const fin = new Date(r.fecha_fin || r.fecha_inicio);
+        const cur = new Date(inicio);
+        while (cur <= fin) {
+          if (cur.getMonth() === calMes && cur.getFullYear() === calAnio)
+            diasOcupados.add(cur.getDate());
+          cur.setDate(cur.getDate() + 1);
+        }
+      });
+
+      const MESES = ['Enero','Febrero','Marzo','Abril','Mayo','Junio','Julio','Agosto','Septiembre','Octubre','Noviembre','Diciembre'];
+      const DIAS  = ['Dom','Lun','Mar','Mié','Jue','Vie','Sáb'];
+      const primerDia  = new Date(calAnio, calMes, 1).getDay();
+      const diasEnMes  = new Date(calAnio, calMes + 1, 0).getDate();
+      const hoyObj     = new Date();
+      const esHoy      = d => d === hoyObj.getDate() && calMes === hoyObj.getMonth() && calAnio === hoyObj.getFullYear();
+
+      const parkSel = misDatos.parqueos.length > 1
+        ? `<select id="calSelPark" class="form-select form-select-sm" style="max-width:200px;" onchange="calCambiarParking(this.value)">
+             <option value="">Todos los parqueos</option>
+             ${misDatos.parqueos.map(p => `<option value="${p.id}" ${calFiltroParking === p.id ? 'selected' : ''}>${esc(p.nombre)}</option>`).join('')}
+           </select>`
+        : misDatos.parqueos.length === 1 ? `<small class="text-muted">${esc(misDatos.parqueos[0].nombre)}</small>` : '';
+
+      let celdas = '';
+      for (let i = 0; i < primerDia; i++) celdas += `<div class="calendar-day" style="background:transparent;"></div>`;
+      for (let d = 1; d <= diasEnMes; d++) {
+        const cls = diasOcupados.has(d) ? 'booked' : 'available';
+        const hoyStyle = esHoy(d) ? 'outline:2px solid var(--rdp-navy,#0F172A);outline-offset:2px;font-weight:800;' : '';
+        celdas += `<div class="calendar-day ${cls}" style="${hoyStyle}cursor:pointer;" onclick="calVerDia(${d})" title="${d} de ${MESES[calMes]}">${d}</div>`;
+      }
+
+      cont.innerHTML = `
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:1rem;flex-wrap:wrap;gap:.75rem;">
+          <div style="display:flex;align-items:center;gap:.5rem;">
+            <button class="btn-ghost" style="padding:.3rem .65rem;font-size:.85rem;" onclick="calNavegar(-1)"><i class="bi bi-chevron-left"></i></button>
+            <span class="fw-bold" style="min-width:165px;text-align:center;font-size:1rem;">${MESES[calMes]} ${calAnio}</span>
+            <button class="btn-ghost" style="padding:.3rem .65rem;font-size:.85rem;" onclick="calNavegar(1)"><i class="bi bi-chevron-right"></i></button>
+          </div>
+          ${parkSel}
+        </div>
+        <div class="calendar-grid" style="margin-bottom:.3rem;">${DIAS.map(d => `<div style="text-align:center;font-size:.72rem;font-weight:700;color:#6b7280;padding:.2rem 0;">${d}</div>`).join('')}</div>
+        <div class="calendar-grid">${celdas}</div>
+        <div style="display:flex;gap:1.25rem;margin-top:.75rem;font-size:.8rem;">
+          <span><span style="display:inline-block;width:12px;height:12px;background:#ffcdd2;border-radius:3px;vertical-align:middle;margin-right:.35rem;"></span>Ocupado</span>
+          <span><span style="display:inline-block;width:12px;height:12px;background:#c8e6c9;border-radius:3px;vertical-align:middle;margin-right:.35rem;"></span>Disponible</span>
+        </div>
+        <div id="calDetalle" style="margin-top:1.25rem;"></div>`;
+    }
+
+    function calNavegar(delta) {
+      calMes += delta;
+      if (calMes > 11) { calMes = 0; calAnio++; }
+      if (calMes < 0)  { calMes = 11; calAnio--; }
+      renderCalendario();
+    }
+
+    function calCambiarParking(val) {
+      calFiltroParking = val || null;
+      renderCalendario();
+    }
+
+    function calVerDia(dia) {
+      const MESES = ['Enero','Febrero','Marzo','Abril','Mayo','Junio','Julio','Agosto','Septiembre','Octubre','Noviembre','Diciembre'];
+      const inicio = new Date(calAnio, calMes, dia, 0, 0, 0);
+      const fin    = new Date(calAnio, calMes, dia, 23, 59, 59);
+      const base   = calFiltroParking
+        ? misDatos.reservas.filter(r => (r.parking?.id || r.parking_id) === calFiltroParking)
+        : misDatos.reservas;
+      const reservas = base.filter(r => {
+        if (!r.fecha_inicio || r.estado === 'cancelada') return false;
+        return new Date(r.fecha_inicio) <= fin && new Date(r.fecha_fin || r.fecha_inicio) >= inicio;
+      });
+      const det = document.getElementById('calDetalle');
+      const colores = { confirmada:'#2e7d32', pendiente:'#e65100', finalizada:'#455a64', cancelada:'#c62828' };
+      const fmtH = d => d ? new Date(d).toLocaleTimeString('es-GT', { hour:'2-digit', minute:'2-digit' }) : '—';
+      if (!reservas.length) {
+        det.innerHTML = `<div class="text-muted" style="font-size:.85rem;"><i class="bi bi-calendar-x icon-inline"></i>Sin reservas el ${dia} de ${MESES[calMes]}</div>`;
+        return;
+      }
+      det.innerHTML = `
+        <div class="fw-semibold mb-2" style="font-size:.88rem;color:var(--rdp-navy);"><i class="bi bi-calendar-date icon-inline"></i>${dia} de ${MESES[calMes]} — ${reservas.length} reserva(s)</div>
+        ${reservas.map(r => `
+          <div style="border-left:3px solid ${colores[r.estado]||'#9ca3af'};padding:.55rem .85rem;margin-bottom:.55rem;background:var(--card-bg,#f9fafb);border-radius:0 8px 8px 0;">
+            <div class="fw-bold" style="font-size:.84rem;">${esc(r.usuario?.nombre||'—')} <span style="font-weight:400;color:#6b7280;">· ${esc(r.parking?.nombre||'')}</span></div>
+            <div style="font-size:.77rem;color:#6b7280;margin-top:.15rem;">
+              <i class="bi bi-clock icon-inline"></i>${fmtH(r.fecha_inicio)} – ${fmtH(r.fecha_fin)}
+              <span style="margin-left:.45rem;background:${colores[r.estado]||'#6b7280'};color:#fff;padding:.1rem .4rem;border-radius:8px;font-size:.7rem;">${r.estado}</span>
+            </div>
+            ${r.precio_total ? `<div style="font-size:.8rem;font-weight:700;color:var(--rdp-navy);margin-top:.2rem;">Q${r.precio_total}</div>` : ''}
+          </div>`).join('')}`;
     }
 
     // ── HELPERS ───────────────────────────────────────────────────
