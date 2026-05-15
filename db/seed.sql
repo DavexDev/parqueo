@@ -97,6 +97,50 @@ VALUES
 ON CONFLICT (id) DO NOTHING;
 
 -- ============================================================
+-- 1b. IDENTIDADES EN AUTH.IDENTITIES
+--     Requerido para que Supabase pueda autenticar vía email/password.
+--     Sin este INSERT el login devuelve "Database error querying schema".
+-- ============================================================
+INSERT INTO auth.identities (id, provider_id, user_id, identity_data, provider, last_sign_in_at, created_at, updated_at)
+VALUES
+  (
+    'a0000000-0000-0000-0000-000000000001',
+    'admin@rdp.gt',
+    'a0000000-0000-0000-0000-000000000001',
+    '{"sub":"a0000000-0000-0000-0000-000000000001","email":"admin@rdp.gt","email_verified":true,"phone_verified":false}',
+    'email', NOW(), NOW(), NOW()
+  ),
+  (
+    'a0000000-0000-0000-0000-000000000002',
+    'roberto.mendez@test.gt',
+    'a0000000-0000-0000-0000-000000000002',
+    '{"sub":"a0000000-0000-0000-0000-000000000002","email":"roberto.mendez@test.gt","email_verified":true,"phone_verified":false}',
+    'email', NOW(), NOW(), NOW()
+  ),
+  (
+    'a0000000-0000-0000-0000-000000000003',
+    'ana.fuentes@test.gt',
+    'a0000000-0000-0000-0000-000000000003',
+    '{"sub":"a0000000-0000-0000-0000-000000000003","email":"ana.fuentes@test.gt","email_verified":true,"phone_verified":false}',
+    'email', NOW(), NOW(), NOW()
+  ),
+  (
+    'a0000000-0000-0000-0000-000000000004',
+    'juan.ortiz@test.gt',
+    'a0000000-0000-0000-0000-000000000004',
+    '{"sub":"a0000000-0000-0000-0000-000000000004","email":"juan.ortiz@test.gt","email_verified":true,"phone_verified":false}',
+    'email', NOW(), NOW(), NOW()
+  ),
+  (
+    'a0000000-0000-0000-0000-000000000005',
+    'maria.lopez@test.gt',
+    'a0000000-0000-0000-0000-000000000005',
+    '{"sub":"a0000000-0000-0000-0000-000000000005","email":"maria.lopez@test.gt","email_verified":true,"phone_verified":false}',
+    'email', NOW(), NOW(), NOW()
+  )
+ON CONFLICT (provider, provider_id) DO NOTHING;
+
+-- ============================================================
 -- 2. COMPLEMENTAR PROFILES (sin tocar 'rol' para evitar el
 --    trigger prevent_role_escalation)
 -- ============================================================
