@@ -1,5 +1,6 @@
-LICENCIA PROPIETARIA — RDP S.A.
-Copyright (c) 2026 RDP S.A. — Parqueos Esquipulas, Guatemala
+LICENCIA PROPIETARIA
+Copyright (c) 2026 DavexDev — Parqueos Esquipulas, Guatemala
+Desarrollado por: DavexDev
 Todos los derechos reservados.
 
 ================================================================================
@@ -9,7 +10,7 @@ AVISO IMPORTANTE — LEA ANTES DE USAR, COPIAR O DISTRIBUIR
 Este software, incluyendo pero no limitado a su código fuente, código compilado,
 diseño, estructura de base de datos, interfaces de usuario, documentación, activos
 gráficos y toda la lógica de negocio contenida en este repositorio, es propiedad
-exclusiva e intelectual de RDP S.A. ("la Empresa").
+exclusiva e intelectual de DavexDev ("el Autor").
 
 QUEDA ESTRICTAMENTE PROHIBIDO, SIN AUTORIZACIÓN ESCRITA PREVIA DE RDP S.A.:
 
@@ -41,32 +42,31 @@ QUEDA ESTRICTAMENTE PROHIBIDO, SIN AUTORIZACIÓN ESCRITA PREVIA DE RDP S.A.:
      atribución o aviso legal presente en el software.
 
 USO PERMITIDO:
-  - El personal autorizado de RDP S.A. puede usar, modificar y desplegar este
-    software exclusivamente para operaciones internas de la Empresa.
+  - El Autor (DavexDev) y el personal que este autorice expresamente puede usar,
+    modificar y desplegar este software.
   - Los usuarios finales pueden acceder a la interfaz pública de la plataforma
     en https://parqueo-beryl.vercel.app únicamente para los fines descritos en
     los Términos de Uso (ver /terminos.html).
 
 CONSECUENCIAS DEL INCUMPLIMIENTO:
-  El incumplimiento de esta licencia constituye una violación de los derechos de
-  propiedad intelectual de RDP S.A. y puede dar lugar a:
+  El incumplimiento de esta licencia constituye una violacion de los derechos de
+  propiedad intelectual de DavexDev y puede dar lugar a:
     - Acciones civiles por daños y perjuicios.
     - Acciones penales conforme al Código Penal de Guatemala (Decreto 17-73) y
       la Ley de Derechos de Autor y Derechos Conexos (Decreto 33-98).
     - Notificaciones de eliminación (DMCA Takedown) ante plataformas de
       hospedaje de código (GitHub, etc.).
 
-GARANTÍA Y RESPONSABILIDAD:
-  ESTE SOFTWARE SE PROPORCIONA "TAL CUAL" PARA USO INTERNO. LA EMPRESA NO OFRECE
-  NINGUNA GARANTÍA EXPRESA O IMPLÍCITA SOBRE SU FUNCIONAMIENTO. EN NINGÚN CASO
-  LA EMPRESA SERÁ RESPONSABLE POR DAÑOS DERIVADOS DEL USO NO AUTORIZADO.
+GARANTIA Y RESPONSABILIDAD:
+  ESTE SOFTWARE SE PROPORCIONA "TAL CUAL". EL AUTOR NO OFRECE NINGUNA GARANTIA
+  EXPRESA O IMPLICITA SOBRE SU FUNCIONAMIENTO. EN NINGUN CASO EL AUTOR SERA
+  RESPONSABLE POR DANOS DERIVADOS DEL USO NO AUTORIZADO.
 
 CONTACTO LEGAL:
-  Para solicitar licencias, reportar violaciones o consultas legales, contacte a
-  través del sistema de mensajes de la plataforma o al representante legal de
-  RDP S.A. en Esquipulas, Chiquimula, Guatemala.
+  Para solicitar licencias, reportar violaciones o consultas legales, contacte
+  al Autor a traves del repositorio oficial: https://github.com/DavexDev
 
 ================================================================================
-© 2026 RDP S.A. — Parqueos Esquipulas | Todos los derechos reservados
+© 2026 DavexDev — Parqueos Esquipulas | Todos los derechos reservados
 Versión del software: 2.0.0
 ================================================================================

@@ -1,5 +1,5 @@
 // server.js
-// © 2026 RDP S.A. — Parqueos Esquipulas, Guatemala
+// © 2026 DavexDev — Parqueos Esquipulas, Guatemala
 // CÓDIGO PROPIETARIO — Ver archivo LICENSE para condiciones de uso.
 // Queda prohibida la copia, distribución o uso no autorizado de este software.
 
