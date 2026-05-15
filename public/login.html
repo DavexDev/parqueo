@@ -161,14 +161,18 @@
     // Manejar callback OAuth de Supabase (redirect desde Google)
     async function handleOAuthCallback() {
       if (!window.rdpSupabase?.isConfigured) return;
-      // Supabase v2 devuelve tokens en el hash después de OAuth
-      const hash = window.location.hash;
-      if (!hash.includes('access_token')) return;
-      // Limpiar hash de la URL sin recargar
-      history.replaceState(null, '', window.location.pathname);
-      // Esperar a que Supabase procese el hash
-      await new Promise(r => setTimeout(r, 400));
+      // Supabase v2 usa PKCE por defecto: el code llega en ?code= (query param)
+      // El flujo implícito legacy usa #access_token (hash) — soportamos ambos
+      const params = new URLSearchParams(window.location.search);
+      const hasCode  = params.has('code');
+      const hasToken = window.location.hash.includes('access_token');
+      if (!hasCode && !hasToken) return;
+      // NO limpiar URL todavía — Supabase necesita leer el code para el intercambio PKCE
+      // Esperar a que el cliente Supabase complete el intercambio automático
+      await new Promise(r => setTimeout(r, 800));
       const session = await window.rdpSupabase.getSession();
+      // Ahora sí limpiar URL
+      history.replaceState(null, '', window.location.pathname);
       if (!session || !session.user) return;
 
       const user = session.user;
