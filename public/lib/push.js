@@ -106,15 +106,25 @@ const rdpPush = (() => {
   }
 
   // ── Enviar notificación a otro usuario ────────────────────────
+  // Supabase requiere subscribe() antes de send(); creamos un canal
+  // temporal, esperamos SUBSCRIBED, enviamos y lo destruimos.
   async function notify(targetUserId, title, body, url = '/') {
-    if (!window.rdpSupabase?.isConfigured) return;
+    if (!window.rdpSupabase?.isConfigured || !targetUserId) return;
     const client = window.rdpSupabase.getClient();
-    // Broadcast al canal del destinatario (no requiere que esté suscrito en este momento;
-    // si está conectado, recibirá el mensaje)
-    await client.channel(`rdp:user:${targetUserId}`).send({
-      type: 'broadcast',
-      event: 'notif',
-      payload: { title, body, url }
+    return new Promise((resolve) => {
+      let sent = false;
+      const ch = client.channel(`rdp:user:${targetUserId}`);
+      const cleanup = () => { try { client.removeChannel(ch); } catch (_) {} resolve(); };
+      const timer = setTimeout(cleanup, 5000);
+      ch.subscribe((status) => {
+        if (status === 'SUBSCRIBED' && !sent) {
+          sent = true;
+          clearTimeout(timer);
+          ch.send({ type: 'broadcast', event: 'notif', payload: { title, body, url } })
+            .catch(() => {})
+            .finally(cleanup);
+        }
+      });
     });
   }
 
