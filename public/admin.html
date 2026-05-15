@@ -231,7 +231,7 @@
     }
 
     async function eliminarUsuario(id) {
-      if (!confirm('¿Desactivar este usuario?')) return;
+      if (!await rdpConfirm('¿Desactivar este usuario? Perderá acceso al sistema.', 'Desactivar')) return;
       await window.rdpSupabase.deleteUser(id);
       cargarUsuarios(); cargarMetricas();
     }
@@ -296,9 +296,9 @@
     }
 
     async function aprobar(id) {
-      if (!confirm('¿Aprobar este parqueo? Quedará visible para todos los usuarios.')) return;
+      if (!await rdpConfirm('¿Aprobar este parqueo? Quedará visible para todos los usuarios.', 'Aprobar')) return;
       const { error } = await window.rdpSupabase.approveParking(id, adminUser.id);
-      if (error) { alert('Error: ' + error.message); return; }
+      if (error) { rdpAlert('No se pudo aprobar el parqueo. Intenta nuevamente.', 'error'); return; }
       cargarPendientes(); cargarParqueos(); cargarMetricas();
     }
 
@@ -310,9 +310,9 @@
 
     async function confirmarRechazo() {
       const motivo = document.getElementById('motivoRechazo').value.trim();
-      if (!motivo) { alert('Ingresa el motivo del rechazo'); return; }
+      if (!motivo) { rdpAlert('Escribe el motivo del rechazo antes de continuar.', 'warning'); return; }
       const { error } = await window.rdpSupabase.rejectParking(rechazarId, motivo);
-      if (error) { alert('Error: ' + error.message); return; }
+      if (error) { rdpAlert('No se pudo rechazar el parqueo. Intenta nuevamente.', 'error'); return; }
       bootstrap.Modal.getInstance(document.getElementById('modalRechazo')).hide();
       rechazarId = null;
       cargarPendientes(); cargarParqueos(); cargarMetricas();

@@ -346,7 +346,7 @@
     async function cambiarEstadoReserva(id, estado) {
       const reserva = misDatos.reservas.find(r => r.id === id);
       const { error } = await window.rdpSupabase.updateReservationStatus(id, estado);
-      if (error) { alert('Error: ' + error.message); return; }
+      if (error) { rdpAlert('No se pudo actualizar el estado de la reserva. Intenta nuevamente.', 'error'); return; }
       // Notificar al visitante
       const visitanteId = reserva?.usuario?.id || reserva?.usuario_id;
       if (window.rdpPush && visitanteId) {
@@ -390,15 +390,15 @@
     async function solicitarPremium() {
       const desc = `[SOLICITUD_PREMIUM] Anfitrión ${hostUser.nombre} (${hostUser.id}) solicita plan Premium (Q200/mes). Contactar para confirmar pago.`;
       const { error } = await window.rdpSupabase.createIncident(hostUser.id, null, desc);
-      if (error) { alert('Error al enviar solicitud: ' + error.message); return; }
-      alert('Solicitud enviada. El equipo de RDP te contactará en 24 horas para confirmar el pago y activar tu plan.');
+      if (error) { rdpAlert('No se pudo enviar la solicitud. Intenta nuevamente.', 'error'); return; }
+      rdpAlert('Solicitud enviada. El equipo de RDP te contactará en las próximas 24 horas para confirmar el pago y activar tu plan Premium.', 'success');
     }
 
     async function solicitarNegocios() {
       const desc = `[SOLICITUD_NEGOCIOS] Anfitrión ${hostUser.nombre} (${hostUser.id}) solicita plan Negocios (Q500/mes). Requiere contacto de ventas.`;
       const { error } = await window.rdpSupabase.createIncident(hostUser.id, null, desc);
-      if (error) { alert('Error: ' + error.message); return; }
-      alert('Solicitud enviada. Un agente de ventas te contactará pronto.');
+      if (error) { rdpAlert('No se pudo enviar la solicitud. Intenta nuevamente.', 'error'); return; }
+      rdpAlert('Solicitud enviada. Un agente de ventas de RDP te contactará en breve para coordinar tu plan Negocios.', 'success');
     }
 
     // ── DESTACAR PARQUEO ──────────────────────────────────────────
@@ -430,15 +430,15 @@
       const parkId = document.getElementById('selectParqueoDestacar').value;
       const desde = document.getElementById('destacarDesde').value;
       const hasta = document.getElementById('destacarHasta').value;
-      if (!parkId) { alert('Selecciona un parqueo'); return; }
-      if (!desde || !hasta || hasta < desde) { alert('Selecciona fechas válidas'); return; }
+      if (!parkId) { rdpAlert('Selecciona un parqueo para destacar.', 'warning'); return; }
+      if (!desde || !hasta || hasta < desde) { rdpAlert('Las fechas no son válidas. Asegúrate de que la fecha de fin sea posterior al inicio.', 'warning'); return; }
       const park = misDatos.parqueos.find(p => p.id === parkId);
       const dias = Math.ceil((new Date(hasta) - new Date(desde)) / (1000*3600*24));
       const costo = Math.ceil(dias / 7) * 50;
       const desc = `[SOLICITUD_DESTACADO] Anfitrión ${hostUser.nombre} (${hostUser.id}) solicita destacar "${park?.nombre}" (ID: ${parkId}) del ${desde} al ${hasta}. Costo estimado: Q${costo}. Confirmar pago para activar.`;
       const { error } = await window.rdpSupabase.createIncident(hostUser.id, parkId, desc);
-      if (error) { alert('Error: ' + error.message); return; }
-      alert(`¡Solicitud enviada! Tu parqueo "${park?.nombre}" será destacado del ${desde} al ${hasta} (Q${costo}) una vez confirmado el pago por RDP.`);
+      if (error) { rdpAlert('No se pudo enviar la solicitud de destaque. Intenta nuevamente.', 'error'); return; }
+      rdpAlert(`Solicitud enviada. Tu parqueo "${park?.nombre}" será destacado del ${desde} al ${hasta} (Q${costo}) una vez que RDP confirme el pago.`, 'success');
     }
 
     // ── HELPERS ───────────────────────────────────────────────────

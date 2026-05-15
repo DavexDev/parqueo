@@ -324,7 +324,7 @@ ${puedeCancel(r) ? `
         ...(motivo ? { motivo_cancelacion: motivo } : {})
       });
       cancelarId = null;
-      if (error) { alert('Error al cancelar: ' + error.message); return; }
+      if (error) { rdpAlert('No se pudo cancelar la reserva. Intenta nuevamente.', 'error'); return; }
       cargarReservas();
     }
 

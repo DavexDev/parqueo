@@ -263,7 +263,7 @@
 
     function enviarReseña() {
       if (ratingSeleccionado === 0) {
-        alert('Por favor selecciona una calificación');
+        rdpAlert('Selecciona una calificación antes de enviar tu reseña.', 'warning');
         return;
       }
 
@@ -272,7 +272,7 @@
 
       if (window.rdpSupabase?.isConfigured) {
         if (!reservaId) {
-          alert('Solo puedes reseñar parqueos donde hayas tenido una reserva finalizada.');
+          rdpAlert('Solo puedes reseñar parqueos donde hayas tenido una reserva finalizada.', 'warning');
           return;
         }
         window.rdpSupabase.createRating({
@@ -284,13 +284,13 @@
         }).then(({ data, error }) => {
           if (error) {
             if (error.code === '42501') {
-              alert('Solo puedes reseñar parqueos con reserva finalizada.');
+              rdpAlert('Solo puedes reseñar parqueos donde hayas tenido una reserva finalizada.', 'warning');
             } else {
-              alert('Error al enviar: ' + error.message);
+              rdpAlert('No se pudo enviar la reseña. Intenta nuevamente.', 'error');
             }
             return;
           }
-          alert('¡Gracias por tu resena!');
+          rdpAlert('Tu reseña fue enviada. ¡Gracias por tu opinión!', 'success');
           document.querySelector('.review-form').innerHTML = '<div class="alert alert-success"><i class="bi bi-check-circle icon-inline"></i>Reseña enviada. ¡Gracias por tu opinión!</div>';
           cargarReseñas(parkingId);
         });
@@ -298,8 +298,8 @@
       }
 
       // Fallback: mostrar mensaje de demo
-      alert('¡Gracias por tu resena! (modo demo)');
-      location.reload();
+      rdpAlert('Tu reseña fue registrada. ¡Gracias por tu opinión!', 'success');
+      setTimeout(() => location.reload(), 1800);
     }
 
     function generarReseñasMock() {

@@ -387,7 +387,7 @@
           ).catch(() => {});
         }
       } catch(err) {
-        alert(err.message);
+        rdpAlert('No se pudo completar la reserva. Verifica los datos e intenta nuevamente.', 'error');
       } finally {
         btn.disabled = false;
         btn.innerHTML = '<i class="bi bi-calendar-check icon-inline"></i>Confirmar reserva';

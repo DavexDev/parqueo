@@ -123,3 +123,55 @@ function toggleDarkMode() {
 if (localStorage.getItem('darkMode') === 'true') {
   document.body.classList.add('dark-mode');
 }
+
+// ── Mensajes amigables ────────────────────────────────────────────────────────
+// Uso: rdpAlert('Texto', 'success'|'error'|'warning'|'info')
+//      await rdpConfirm('¿Seguro?', 'Confirmar', 'Cancelar')
+function rdpAlert(msg, tipo = 'info') {
+  const cfg = {
+    success: { icon: 'bi-check-circle-fill',         color: '#16a34a', bg: '#f0fdf4' },
+    error:   { icon: 'bi-x-circle-fill',             color: '#dc2626', bg: '#fef2f2' },
+    warning: { icon: 'bi-exclamation-triangle-fill', color: '#d97706', bg: '#fffbeb' },
+    info:    { icon: 'bi-info-circle-fill',           color: '#0F172A', bg: '#f8fafc' }
+  };
+  const { icon, color } = cfg[tipo] || cfg.info;
+  document.getElementById('rdp-alert-overlay')?.remove();
+  if (!document.getElementById('rdp-alert-style')) {
+    const s = document.createElement('style');
+    s.id = 'rdp-alert-style';
+    s.textContent = '@keyframes rdpAlertIn{from{opacity:0;transform:translateY(20px)}to{opacity:1;transform:translateY(0)}}';
+    document.head.appendChild(s);
+  }
+  const el = document.createElement('div');
+  el.id = 'rdp-alert-overlay';
+  el.style.cssText = 'position:fixed;inset:0;z-index:10000;display:flex;align-items:flex-end;justify-content:center;padding:1rem;pointer-events:none;';
+  el.innerHTML = `
+    <div style="pointer-events:auto;background:#fff;border-radius:16px;padding:1rem 1.1rem;width:100%;max-width:400px;box-shadow:0 8px 32px rgba(15,23,42,.18);animation:rdpAlertIn .22s ease;border-left:4px solid ${color};display:flex;align-items:flex-start;gap:.75rem;">
+      <i class="bi ${icon}" style="font-size:1.2rem;color:${color};flex-shrink:0;margin-top:.1rem;"></i>
+      <span style="flex:1;font-size:.87rem;color:#1e293b;line-height:1.5;">${msg}</span>
+      <button onclick="document.getElementById('rdp-alert-overlay')?.remove()" style="background:none;border:none;cursor:pointer;color:#94a3b8;font-size:1rem;padding:0;flex-shrink:0;line-height:1;"><i class="bi bi-x-lg"></i></button>
+    </div>`;
+  document.body.appendChild(el);
+  const delay = tipo === 'error' ? 6000 : tipo === 'success' ? 3500 : 5000;
+  setTimeout(() => document.getElementById('rdp-alert-overlay')?.remove(), delay);
+}
+
+function rdpConfirm(msg, confirmText = 'Confirmar', cancelText = 'Cancelar') {
+  return new Promise((resolve) => {
+    document.getElementById('rdp-confirm-overlay')?.remove();
+    const el = document.createElement('div');
+    el.id = 'rdp-confirm-overlay';
+    el.style.cssText = 'position:fixed;inset:0;z-index:10001;background:rgba(15,23,42,.45);backdrop-filter:blur(3px);display:flex;align-items:flex-end;justify-content:center;padding:1rem;';
+    el.innerHTML = `
+      <div style="background:#fff;border-radius:20px;padding:1.4rem 1.25rem 1.1rem;width:100%;max-width:400px;box-shadow:0 8px 32px rgba(15,23,42,.18);animation:rdpAlertIn .22s ease;">
+        <p style="margin:0 0 1.2rem;font-size:.9rem;color:#1e293b;line-height:1.5;">${msg}</p>
+        <div style="display:flex;gap:.6rem;">
+          <button id="rdp-confirm-cancel" style="flex:1;padding:.6rem;border-radius:10px;border:1.5px solid #e2e8f0;background:#fff;font-size:.84rem;cursor:pointer;font-weight:600;color:#64748b;">${cancelText}</button>
+          <button id="rdp-confirm-ok" style="flex:1;padding:.6rem;border-radius:10px;border:none;background:#0F172A;color:#fff;font-size:.84rem;cursor:pointer;font-weight:700;">${confirmText}</button>
+        </div>
+      </div>`;
+    document.body.appendChild(el);
+    document.getElementById('rdp-confirm-ok').onclick     = () => { el.remove(); resolve(true);  };
+    document.getElementById('rdp-confirm-cancel').onclick = () => { el.remove(); resolve(false); };
+  });
+}
