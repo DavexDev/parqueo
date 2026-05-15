@@ -160,6 +160,22 @@
       const params = new URLSearchParams(window.location.search);
       const chatId = params.get('chat');
       if (chatId) {
+        // Visitantes: solo permitir si existe al menos una reserva confirmada con ese anfitrión
+        if (user.rol === 'visitante') {
+          const { data: reservasConf } = await window.rdpSupabase.getClient()
+            .from('reservations')
+            .select('id, parkings(anfitrion_id)')
+            .eq('usuario_id', currentUserId)
+            .eq('estado', 'confirmada');
+          const tieneConfirmada = (reservasConf || []).some(r => r.parkings?.anfitrion_id === chatId);
+          if (!tieneConfirmada) {
+            document.getElementById('chatEmptyState').innerHTML = `
+              <i class="bi bi-lock" style="font-size:2.8rem;display:block;margin-bottom:.75rem;color:var(--rdp-navy);opacity:.35;"></i>
+              <div style="font-weight:700;color:var(--rdp-navy);margin-bottom:.35rem;">Chat no disponible</div>
+              <div style="font-size:.82rem;color:#6b7280;max-width:220px;margin:0 auto;">El anfitrion debe aceptar tu reserva antes de poder enviar mensajes.</div>`;
+            return;
+          }
+        }
         const target = contactos.find(c => c.id === chatId);
         if (target) {
           abrirConversacion(target.id, target.nombre, null);
