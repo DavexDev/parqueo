@@ -172,6 +172,7 @@
 
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
   <script src="lib/supabase-client.js"></script>
+  <script src="lib/push.js"></script>
   <script src="app.js"></script>
   <script>
     const user = requireLogin(['visitante','anfitrion','admin']);
@@ -369,6 +370,16 @@
         }
 
         mostrarComprobante(reserva, precio_total, fecha_inicio, fecha_fin);
+
+        // Notificar al anfitrión en tiempo real
+        if (window.rdpPush && parqueo?.anfitrion_id) {
+          window.rdpPush.notify(
+            parqueo.anfitrion_id,
+            'Nueva reserva recibida',
+            `${user.nombre} reservó ${parqueo.nombre} — Q${precio_total.toFixed(2)}`,
+            'host-dashboard.html'
+          ).catch(() => {});
+        }
       } catch(err) {
         alert(err.message);
       } finally {

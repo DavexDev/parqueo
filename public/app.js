@@ -60,10 +60,18 @@ function renderNavbar() {
       <div class="d-flex align-items-center gap-2">
         <span class="text-white small fw-600" style="max-width:80px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${user.nombre}</span>
         <span class="navbar-badge badge-rol ${rolClass}">${user.rol}</span>
+        <button class="btn btn-sm btn-outline-light position-relative" style="border-radius:20px;font-size:0.75rem;padding:0.2rem 0.65rem;" title="Notificaciones" onclick="rdpPush?.clearUnread()">
+          <i class="bi bi-bell-fill"></i>
+          <span id="rdp-notif-badge" style="display:none;position:absolute;top:-4px;right:-4px;background:#ef4444;color:#fff;font-size:.6rem;font-weight:700;border-radius:99px;padding:1px 4px;line-height:1.2;"></span>
+        </button>
         <button class="btn btn-sm btn-outline-light" style="border-radius:20px;font-size:0.75rem;padding:0.2rem 0.65rem;" title="Modo oscuro" onclick="toggleDarkMode()"><i class="bi bi-moon-stars"></i></button>
         <button class="btn btn-sm btn-outline-light" style="border-radius:20px;font-size:0.75rem;padding:0.2rem 0.65rem;" onclick="logout()">Salir</button>
       </div>
     `;
+    // Inicializar push después de renderizar (async, no bloquea)
+    if (window.rdpPush && user.id) {
+      window.rdpPush.init(user.id).catch(() => {});
+    }
   } else {
     nav.innerHTML = `
       ${brand}
