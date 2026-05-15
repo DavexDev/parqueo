@@ -101,11 +101,11 @@
       <div class="form-section">
         <label>¿Qué tan buena fue tu experiencia?</label>
         <div class="rating-input" id="ratingInput">
-          <span class="star" data-value="1" onclick="selectRating(1)">★</span>
-          <span class="star" data-value="2" onclick="selectRating(2)">★</span>
-          <span class="star" data-value="3" onclick="selectRating(3)">★</span>
-          <span class="star" data-value="4" onclick="selectRating(4)">★</span>
-          <span class="star" data-value="5" onclick="selectRating(5)">★</span>
+          <span class="star" data-value="1" onclick="selectRating(1)"><i class="bi bi-star-fill"></i></span>
+          <span class="star" data-value="2" onclick="selectRating(2)"><i class="bi bi-star-fill"></i></span>
+          <span class="star" data-value="3" onclick="selectRating(3)"><i class="bi bi-star-fill"></i></span>
+          <span class="star" data-value="4" onclick="selectRating(4)"><i class="bi bi-star-fill"></i></span>
+          <span class="star" data-value="5" onclick="selectRating(5)"><i class="bi bi-star-fill"></i></span>
         </div>
         <p style="font-size:0.85rem;color:var(--text-muted);margin-top:0.5rem;display:none;" id="ratingText"></p>
       </div>
@@ -213,7 +213,7 @@
                   <div class="review-author"><i class="bi bi-person-circle"></i> ${r.profiles?.nombre || 'Usuario'}</div>
                   <div class="review-meta">${new Date(r.created_at).toLocaleDateString('es-GT')}</div>
                 </div>
-                <div class="review-rating">${'★'.repeat(r.estrellas)}${'☆'.repeat(5 - r.estrellas)}</div>
+                <div class="review-rating">${'<i class="bi bi-star-fill" style="color:#ffc107;"></i>'.repeat(r.estrellas)}${'<i class="bi bi-star" style="color:#ffc107;"></i>'.repeat(5 - r.estrellas)}</div>
               </div>
               ${r.comentario ? `<p class="review-text">${r.comentario}</p>` : ''}
             </div>
@@ -280,7 +280,7 @@
             }
             return;
           }
-          alert('✓ ¡Gracias por tu reseña!');
+          alert('¡Gracias por tu resena!');
           document.querySelector('.review-form').innerHTML = '<div class="alert alert-success"><i class="bi bi-check-circle icon-inline"></i>Reseña enviada. ¡Gracias por tu opinión!</div>';
           cargarReseñas(parkingId);
         });
@@ -288,7 +288,7 @@
       }
 
       // Fallback: mostrar mensaje de demo
-      alert('✓ ¡Gracias por tu reseña! (modo demo)');
+      alert('¡Gracias por tu resena! (modo demo)');
       location.reload();
     }
 
@@ -305,7 +305,7 @@
               <div class="review-author"><i class="bi bi-person-circle"></i> ${r.author}</div>
               <div class="review-meta">${r.date}</div>
             </div>
-            <div class="review-rating">${'★'.repeat(r.rating)}${'☆'.repeat(5 - r.rating)}</div>
+            <div class="review-rating">${'<i class="bi bi-star-fill" style="color:#ffc107;"></i>'.repeat(r.rating)}${'<i class="bi bi-star" style="color:#ffc107;"></i>'.repeat(5 - r.rating)}</div>
           </div>
           <p class="review-text">${r.text}</p>
         </div>

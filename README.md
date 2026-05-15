@@ -1,27 +1,27 @@
-# 🅿️ Parqueos Esquipulas - MVP DEMO
+﻿# Parqueos Esquipulas - MVP DEMO
 
 Sistema completo de reserva de estacionamientos. **Demo lista con datos mock, sin dependencias externas.**
 
 ---
 
-## 🎯 Inicio Rápido (2 pasos)
+## Inicio Rápido (2 pasos)
 
-### 1️⃣ Instalar
+### 1. Instalar
 ```bash
 npm install
 ```
 
-### 2️⃣ Ejecutar
+### 2. Ejecutar
 ```bash
 npm start
 # O: node server.js
 ```
 
-Abre → **http://localhost:3000** ✅
+Abre → **http://localhost:3000** 
 
 ---
 
-## 👤 Usuarios Demo
+## Usuarios Demo
 
 | Email | Contraseña | Rol |
 |-------|-----------|-----|
@@ -31,24 +31,24 @@ Abre → **http://localhost:3000** ✅
 
 ---
 
-## 📋 Lo que Funciona (Demo Completa)
+## Lo que Funciona (Demo Completa)
 
-### ✅ Visitante
+### Visitante
 - Buscar parqueos (filtros: tipo, precio, radio)
 - Mapa interactivo con ubicación actual
 - Reservar parqueos
 - Ver historial de reservas (con filtros)
 - Chatear con anfitriones
-- Dejar reseñas ⭐
+- Dejar reseñas 
 
-### ✅ Anfitrión  
+### Anfitrión 
 - Publicar parqueos
 - Dashboard con ingresos totales
 - Ver y confirmar reservas
 - Chatear con visitantes
 - Ver reseñas de sus parqueos
 
-### ✅ Admin
+### Admin
 - Dashboard con 4 métricas
 - Gestionar usuarios
 - Gestionar parqueos
@@ -56,18 +56,18 @@ Abre → **http://localhost:3000** ✅
 - Monitorear mensajes
 - Panel completo funcional
 
-### ✅ General
+### General
 - **Autenticación JWT** (email + password)
 - **3 Roles** con permisos
 - **Responsive design** (mobile, tablet, desktop)
-- **Dark mode** toggle 🌙
+- **Dark mode** toggle 
 - **Tutorial interactivo** (5 modales)
 - **Validación de entrada**
 - **Manejo de errores**
 
 ---
 
-## 🎬 Demo Flow (5 minutos)
+## Demo Flow (5 minutos)
 
 ### 1. Tutorial (1 min)
 ```
@@ -77,95 +77,95 @@ Inicio → "Ver Tutorial" → Lee las 5 guías
 ### 2. Visitante (1.5 min)
 ```
 Login: juan@mail.com / 1234
-  → Buscar parqueo
-  → Ver en mapa
-  → Reservar
-  → Ver en "Mis Reservas"
+ → Buscar parqueo
+ → Ver en mapa
+ → Reservar
+ → Ver en "Mis Reservas"
 ```
 
 ### 3. Anfitrión (1.5 min)
 ```
 Login: ana@mail.com / 1234
-  → "Mi Negocio" → Ver ganancias
-  → "Reservas" → Confirmar reserva
-  → "Mensajes" → Chatear
+ → "Mi Negocio" → Ver ganancias
+ → "Reservas" → Confirmar reserva
+ → "Mensajes" → Chatear
 ```
 
 ### 4. Admin (1 min)
 ```
 Login: admin@parqueos.com / 1234
-  → Ver dashboard
-  → Gestionar usuarios/parqueos/reservas
+ → Ver dashboard
+ → Gestionar usuarios/parqueos/reservas
 ```
 
 ---
 
-## 🗂️ Estructura Clave
+## Estructura Clave
 
 ```
 public/
-├── index.html              # Inicio
-├── login.html              # Auth (email + password)
-├── parkings.html           # Búsqueda + mapa 🗺️
-├── reserve.html            # Crear reserva
-├── reservations.html       # Mis reservas
-├── publish.html            # Publicar parqueo
-├── host-dashboard.html     # Dashboard anfitrión 💰
-├── messages.html           # Chat 💬
-├── reviews.html            # Reseñas ⭐
-├── admin.html              # Panel admin ⚙️
-├── tutorial.html           # Guía interactiva 📖
-├── app.js                  # Auth helpers
-└── styles.css              # Diseño + dark mode
+├── index.html # Inicio
+├── login.html # Auth (email + password)
+├── parkings.html # Búsqueda + mapa 
+├── reserve.html # Crear reserva
+├── reservations.html # Mis reservas
+├── publish.html # Publicar parqueo
+├── host-dashboard.html # Dashboard anfitrión 
+├── messages.html # Chat 
+├── reviews.html # Reseñas 
+├── admin.html # Panel admin 
+├── tutorial.html # Guía interactiva 
+├── app.js # Auth helpers
+└── styles.css # Diseño + dark mode
 
-server.js                    # Express API (15+ endpoints)
-src/middleware/             # Auth JWT, validación
+server.js # Express API (15+ endpoints)
+src/middleware/ # Auth JWT, validación
 ```
 
 ---
 
-## 🔗 API (15+ Endpoints)
+## API (15+ Endpoints)
 
 Todo funciona con mock data — sin base de datos:
 
 ```
-POST   /api/login                 # Autenticación
-POST   /api/register              # Nuevo usuario
-GET    /api/parkings              # Listar parqueos
-GET    /api/parkings/near         # Búsqueda por radio
-POST   /api/parkings              # Crear (anfitrión)
-GET    /api/reservations          # Mis reservas
-POST   /api/reservations          # Crear reserva
-PUT    /api/reservations/:id      # Cambiar estado
-GET    /api/messages/conversation # Chat
-POST   /api/messages              # Enviar mensaje
-GET    /api/admin/users           # Todos usuarios
-GET    /api/admin/parkings        # Todos parqueos
-GET    /api/admin/reservations    # Todas reservas
-GET    /api/admin/messages        # Todos mensajes
-GET    /api/admin/metrics         # Dashboard
+POST /api/login # Autenticación
+POST /api/register # Nuevo usuario
+GET /api/parkings # Listar parqueos
+GET /api/parkings/near # Búsqueda por radio
+POST /api/parkings # Crear (anfitrión)
+GET /api/reservations # Mis reservas
+POST /api/reservations # Crear reserva
+PUT /api/reservations/:id # Cambiar estado
+GET /api/messages/conversation # Chat
+POST /api/messages # Enviar mensaje
+GET /api/admin/users # Todos usuarios
+GET /api/admin/parkings # Todos parqueos
+GET /api/admin/reservations # Todas reservas
+GET /api/admin/messages # Todos mensajes
+GET /api/admin/metrics # Dashboard
 ```
 
 ---
 
-## 🎨 Features Premium
+## Features Premium
 
 | Feature | Estado |
 |---------|--------|
-| Autenticación JWT | ✅ |
-| 3 Roles RBAC | ✅ |
-| Mapa Leaflet.js | ✅ |
-| Dark Mode | ✅ |
-| Tutorial modal | ✅ |
-| Dashboard anfitrión | ✅ |
-| Reseñas 5⭐ | ✅ |
-| Responsive mobile | ✅ |
-| PWA ready | ✅ |
-| Mock data completo | ✅ |
+| Autenticación JWT | |
+| 3 Roles RBAC | |
+| Mapa Leaflet.js | |
+| Dark Mode | |
+| Tutorial modal | |
+| Dashboard anfitrión | |
+| Reseñas 5 | |
+| Responsive mobile | |
+| PWA ready | |
+| Mock data completo | |
 
 ---
 
-## 🎯 Datos Mock
+## Datos Mock
 
 - **2 parqueos** (uno de Ana)
 - **3 usuarios** (Juan, Ana, Admin)
@@ -177,7 +177,7 @@ Todo generado automáticamente al iniciar.
 
 ---
 
-## 🚀 Stack Utilizado
+## Stack Utilizado
 
 - **Backend**: Node.js 18+, Express 5.x
 - **Frontend**: HTML5, CSS3, Bootstrap 5.3, Vanilla JS
@@ -189,20 +189,20 @@ Todo generado automáticamente al iniciar.
 
 ---
 
-## ✨ Highlights
+## Highlights
 
-✅ **Sin dependencias externas** (solo Express, JWT, Bootstrap)  
-✅ **Datos mock en memoria** (listo para MySQL)  
-✅ **Clean code** (repositories pattern, middlewares)  
-✅ **CORS configurado** (ready para frontend externo)  
-✅ **Validación completa** (email, roles, input)  
-✅ **Error handling** (respuestas HTTP específicas)  
-✅ **JWT expirable** (7 días)  
-✅ **Role-based access** (requireRole middleware)  
+ **Sin dependencias externas** (solo Express, JWT, Bootstrap) 
+ **Datos mock en memoria** (listo para MySQL) 
+ **Clean code** (repositories pattern, middlewares) 
+ **CORS configurado** (ready para frontend externo) 
+ **Validación completa** (email, roles, input) 
+ **Error handling** (respuestas HTTP específicas) 
+ **JWT expirable** (7 días) 
+ **Role-based access** (requireRole middleware) 
 
 ---
 
-## 📝 Para Agregar MySQL
+## Para Agregar MySQL
 
 1. Crear base de datos:
 ```sql
@@ -222,31 +222,31 @@ DB_POOL_SIZE=5
 
 ---
 
-## 🎬 Demo Responsivo
+## Demo Responsivo
 
 - Abre en **Chrome/Firefox**
 - Presiona **F12** → **Toggle device toolbar**
 - Prueba en:
-  - iPhone (375px)
-  - iPad (768px)
-  - Desktop (1920px)
+ - iPhone (375px)
+ - iPad (768px)
+ - Desktop (1920px)
 
 Todo se adapta automáticamente.
 
 ---
 
-## 🔐 Seguridad (Demo)
+## Seguridad (Demo)
 
-✅ JWT con expiración  
-✅ Contraseña obligatoria  
-✅ No se permite registrar como admin  
-✅ Role-based access control  
-✅ Email validation  
-✅ Input sanitization  
+ JWT con expiración 
+ Contraseña obligatoria 
+ No se permite registrar como admin 
+ Role-based access control 
+ Email validation 
+ Input sanitization 
 
 ---
 
-## 🎯 Caso de Uso Real
+## Caso de Uso Real
 
 ```
 1. Usuario nuevo entra → tutorial
@@ -259,11 +259,11 @@ Todo se adapta automáticamente.
 8. Admin ve reportes en dashboard
 ```
 
-**Todo funciona ahora sin internet externo.** ✅
+**Todo funciona ahora sin internet externo.** 
 
 ---
 
-## 📊 Resumen
+## Resumen
 
 | Métrica | Valor |
 |---------|-------|
@@ -273,29 +273,29 @@ Todo se adapta automáticamente.
 | Roles | 3 |
 | Líneas código | ~3000 |
 | Tiempo setup | < 1 min |
-| Status | 🟢 DEMO LISTA |
+| Status | DEMO LISTA |
 
 ---
 
-## 🎁 Incluido
+## Incluido
 
-- ✅ Frontend completo (11 HTML)
-- ✅ Backend API (Express 5.x)
-- ✅ Autenticación (JWT)
-- ✅ Mock data (sin DB)
-- ✅ Diseño responsive
-- ✅ Dark mode
-- ✅ Tutorial interactivo
-- ✅ Validación entrada
-- ✅ Manejo errores
-
----
-
-**Listo para:** Presentación, demo, investor pitch, evaluación cliente  
-**Tiempo demo:** 5-10 minutos  
-**Setup time:** 1 minuto  
-**Estado:** 🟢 **100% Funcional**
+- Frontend completo (11 HTML)
+- Backend API (Express 5.x)
+- Autenticación (JWT)
+- Mock data (sin DB)
+- Diseño responsive
+- Dark mode
+- Tutorial interactivo
+- Validación entrada
+- Manejo errores
 
 ---
 
-Made with ❤️ for Esquipulas | May 2026
+**Listo para:** Presentación, demo, investor pitch, evaluación cliente 
+**Tiempo demo:** 5-10 minutos 
+**Setup time:** 1 minuto 
+**Estado:** **100% Funcional**
+
+---
+
+Made with for Esquipulas | May 2026

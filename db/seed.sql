@@ -6,12 +6,12 @@
 -- NO ejecutar en producción con datos reales.
 --
 -- Crea:
---   • 5 usuarios  → 1 admin | 2 anfitriones | 2 visitantes
---   • 5 parqueos  → 3 de Roberto, 2 de Ana
---   • 5 reservas  → varios estados
---   • 2 reseñas
---   • 5 mensajes
---   • Horarios, tipos de vehículo y notificaciones
+--   - 5 usuarios  -> 1 admin | 2 anfitriones | 2 visitantes
+--   - 5 parqueos  -> 3 de Roberto, 2 de Ana
+--   - 5 reservas  -> varios estados
+--   - 2 resenas
+--   - 5 mensajes
+--   - Horarios, tipos de vehiculo y notificaciones
 --
 -- Contraseña de TODOS los usuarios de prueba: Test1234!
 --
@@ -525,11 +525,11 @@ ON CONFLICT (id) DO NOTHING;
 -- 10. VERIFICACIÓN FINAL
 -- ============================================================
 SELECT
-  (SELECT COUNT(*) FROM auth.users  WHERE id LIKE 'a0000000%') AS auth_users,
-  (SELECT COUNT(*) FROM profiles    WHERE id LIKE 'a0000000%') AS profiles,
-  (SELECT COUNT(*) FROM parkings    WHERE id LIKE 'b0000000%') AS parqueos,
-  (SELECT COUNT(*) FROM reservations WHERE id LIKE 'c0000000%') AS reservas,
-  (SELECT COUNT(*) FROM commissions WHERE reserva_id LIKE 'c0000000%') AS comisiones,
-  (SELECT COUNT(*) FROM ratings     WHERE id LIKE 'd0000000%') AS resenas,
-  (SELECT COUNT(*) FROM messages    WHERE id LIKE 'e0000000%') AS mensajes,
-  (SELECT COUNT(*) FROM notifications WHERE id LIKE 'f0000000%') AS notificaciones;
+  (SELECT COUNT(*) FROM auth.users   WHERE id::text LIKE 'a0000000%') AS auth_users,
+  (SELECT COUNT(*) FROM profiles     WHERE id::text LIKE 'a0000000%') AS profiles,
+  (SELECT COUNT(*) FROM parkings     WHERE id::text LIKE 'b0000000%') AS parqueos,
+  (SELECT COUNT(*) FROM reservations WHERE id::text LIKE 'c0000000%') AS reservas,
+  (SELECT COUNT(*) FROM commissions  WHERE reserva_id::text LIKE 'c0000000%') AS comisiones,
+  (SELECT COUNT(*) FROM ratings      WHERE id::text LIKE 'd0000000%') AS resenas,
+  (SELECT COUNT(*) FROM messages     WHERE id::text LIKE 'e0000000%') AS mensajes,
+  (SELECT COUNT(*) FROM notifications WHERE id::text LIKE 'f0000000%') AS notificaciones;
