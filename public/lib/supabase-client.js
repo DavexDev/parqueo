@@ -59,6 +59,18 @@
     return client.auth.signInWithPassword({ email, password });
   }
 
+  async function signInWithGoogle(redirectTo) {
+    const client = getClient();
+    if (!client) return { data: null, error: { message: 'Supabase no configurado' } };
+    return client.auth.signInWithOAuth({
+      provider: 'google',
+      options: {
+        redirectTo: redirectTo || window.location.origin + '/index.html',
+        queryParams: { access_type: 'offline', prompt: 'consent' }
+      }
+    });
+  }
+
   async function signOut() {
     const client = getClient();
     if (!client) return;
@@ -272,6 +284,7 @@
     // Auth
     signUp,
     signIn,
+    signInWithGoogle,
     signOut,
     getSession,
     getUser,
