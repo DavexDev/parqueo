@@ -1,0 +1,178 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Política de Cookies — RDP S.A.</title>
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css">
+  <link rel="stylesheet" href="styles.css">
+  <style>
+    .legal-container { max-width: 800px; margin: 0 auto; padding: 2rem 1rem 4rem; }
+    .legal-header { text-align: center; padding: 2.5rem 0 2rem; border-bottom: 2px solid var(--rdp-gold); margin-bottom: 2.5rem; }
+    .legal-header h1 { font-size: 1.75rem; font-weight: 800; color: var(--rdp-navy); margin-bottom: 0.5rem; }
+    .legal-header .last-updated { font-size: 0.85rem; color: var(--text-muted); }
+    .legal-section { margin-bottom: 2rem; }
+    .legal-section h2 { font-size: 1.1rem; font-weight: 700; color: var(--rdp-navy); border-left: 3px solid var(--rdp-gold); padding-left: 0.75rem; margin-bottom: 1rem; }
+    .legal-section p, .legal-section li { font-size: 0.95rem; color: var(--text); line-height: 1.7; }
+    .legal-section ul { padding-left: 1.5rem; }
+    .legal-section li { margin-bottom: 0.4rem; }
+    .cookie-type { background: var(--card-bg); border-radius: 10px; padding: 1.25rem; margin-bottom: 1rem; border-left: 4px solid var(--rdp-navy); }
+    .cookie-type.essential { border-color: #16a34a; }
+    .cookie-type.functional { border-color: var(--rdp-gold); }
+    .cookie-type.analytics { border-color: #2563eb; }
+    .cookie-type h3 { font-size: 1rem; font-weight: 700; margin-bottom: 0.5rem; }
+    .cookie-badge { display: inline-block; padding: 0.2rem 0.6rem; border-radius: 20px; font-size: 0.75rem; font-weight: 600; margin-left: 0.5rem; }
+    .badge-required { background: #dcfce7; color: #15803d; }
+    .badge-optional { background: #fef9c3; color: #854d0e; }
+    .data-table { width: 100%; border-collapse: collapse; font-size: 0.9rem; margin: 1rem 0; }
+    .data-table th { background: var(--rdp-navy); color: #fff; padding: 0.6rem 1rem; text-align: left; font-weight: 600; }
+    .data-table td { padding: 0.6rem 1rem; border-bottom: 1px solid var(--border); vertical-align: top; }
+    .data-table tr:nth-child(even) td { background: rgba(15,23,42,0.03); }
+    .highlight-box { background: rgba(212,175,55,0.08); border: 1px solid rgba(212,175,55,0.3); border-radius: 10px; padding: 1.25rem 1.5rem; margin: 1.5rem 0; }
+    .highlight-box p { margin: 0; font-size: 0.9rem; }
+    .legal-footer-links { display: flex; gap: 1.5rem; justify-content: center; flex-wrap: wrap; padding-top: 2rem; border-top: 1px solid var(--border); margin-top: 2rem; }
+    .legal-footer-links a { font-size: 0.85rem; color: var(--rdp-navy); text-decoration: none; font-weight: 500; }
+    .legal-footer-links a:hover { color: var(--rdp-gold); }
+  </style>
+</head>
+<body>
+  <nav class="navbar navbar-dark navbar-parqueo">
+    <div class="container-fluid">
+      <a class="navbar-brand" href="index.html">
+        <div class="navbar-brand-logo">R</div>
+        RDP S.A.
+      </a>
+    </div>
+  </nav>
+
+  <div class="page-container">
+    <div class="legal-container">
+      <div class="legal-header">
+        <h1><i class="bi bi-cookie" style="color:var(--rdp-gold);margin-right:0.5rem;"></i>Política de Cookies y Almacenamiento Local</h1>
+        <p class="last-updated">Última actualización: 14 de mayo de 2026 · RDP S.A. — Parqueos Esquipulas</p>
+      </div>
+
+      <div class="highlight-box">
+        <p><strong>¿Qué son las cookies?</strong> Las cookies son pequeños archivos de texto que los sitios web almacenan en su dispositivo para recordar sus preferencias y mantener su sesión activa. RDP S.A. usa tanto cookies como <em>localStorage</em> y <em>sessionStorage</em> del navegador.</p>
+      </div>
+
+      <!-- 1 -->
+      <div class="legal-section">
+        <h2>1. Cómo usamos el almacenamiento local</h2>
+        <p>RDP S.A. es una <strong>Progressive Web App (PWA)</strong> que funciona principalmente con <code>localStorage</code> y tokens de sesión, no con cookies de rastreo tradicionales. A continuación se detalla qué se almacena en su dispositivo:</p>
+
+        <table class="data-table">
+          <thead><tr><th>Clave</th><th>Contenido</th><th>Duración</th><th>Propósito</th></tr></thead>
+          <tbody>
+            <tr>
+              <td><code>parqueo_user</code></td>
+              <td>Nombre, correo, rol del usuario</td>
+              <td>Hasta cerrar sesión</td>
+              <td>Mantener sesión iniciada</td>
+            </tr>
+            <tr>
+              <td><code>token</code></td>
+              <td>Token JWT de autenticación</td>
+              <td>Hasta cerrar sesión</td>
+              <td>Autenticar peticiones a la API</td>
+            </tr>
+            <tr>
+              <td><code>rdp_auth_token</code></td>
+              <td>Sesión de Supabase (token cifrado)</td>
+              <td>Hasta expirar o cerrar sesión</td>
+              <td>Autenticación con Supabase</td>
+            </tr>
+            <tr>
+              <td><code>rdp_dark_mode</code></td>
+              <td>Preferencia de modo oscuro (<code>true/false</code>)</td>
+              <td>Permanente</td>
+              <td>Recordar tema visual</td>
+            </tr>
+            <tr>
+              <td><code>firebase:*</code></td>
+              <td>Datos internos de Firebase SDK</td>
+              <td>Variable</td>
+              <td>Notificaciones push (FCM)</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+
+      <!-- 2 -->
+      <div class="legal-section">
+        <h2>2. Tipos de almacenamiento por categoría</h2>
+
+        <div class="cookie-type essential">
+          <h3>Esenciales <span class="cookie-badge badge-required">Requeridos</span></h3>
+          <p>Sin estos datos no es posible usar la plataforma. Incluyen la sesión de usuario, el token de autenticación y la sesión de Supabase. No pueden desactivarse.</p>
+        </div>
+
+        <div class="cookie-type functional">
+          <h3>Funcionales <span class="cookie-badge badge-optional">Opcionales</span></h3>
+          <p>Guardan preferencias como el modo oscuro. No recopilan datos personales. Puede eliminarlos limpiando el almacenamiento del navegador sin perder el acceso a su cuenta.</p>
+        </div>
+
+        <div class="cookie-type analytics">
+          <h3>Terceros (Google / Firebase)</h3>
+          <p>Firebase Cloud Messaging almacena internamente el token de notificaciones push en su dispositivo. Este token permite enviarle notificaciones, pero no se usa para rastrear su navegación. Google puede establecer sus propias cookies cuando usa el inicio de sesión con Google OAuth.</p>
+        </div>
+      </div>
+
+      <!-- 3 -->
+      <div class="legal-section">
+        <h2>3. Cookies de terceros</h2>
+        <p>Cuando utiliza <strong>Iniciar sesión con Google</strong>, Google puede establecer cookies en su dispositivo según su propia <a href="https://policies.google.com/privacy" target="_blank" rel="noopener">política de privacidad</a>. RDP S.A. no controla estas cookies.</p>
+        <p>Los mapas son servidos por <strong>OpenStreetMap / Leaflet</strong>. Leaflet carga los tiles del mapa desde servidores de OpenStreetMap, lo cual puede implicar que su dirección IP sea registrada por dicho servicio. Consulte la <a href="https://wiki.osmfoundation.org/wiki/Privacy_Policy" target="_blank" rel="noopener">política de OpenStreetMap</a>.</p>
+      </div>
+
+      <!-- 4 -->
+      <div class="legal-section">
+        <h2>4. No usamos cookies de rastreo publicitario</h2>
+        <p>RDP S.A. <strong>no utiliza</strong> Google Analytics, Meta Pixel, TikTok Pixel ni ninguna otra tecnología de rastreo publicitario. No compartimos datos de comportamiento de usuario con redes publicitarias.</p>
+      </div>
+
+      <!-- 5 -->
+      <div class="legal-section">
+        <h2>5. Cómo gestionar o eliminar el almacenamiento</h2>
+        <p>Puede borrar los datos almacenados por RDP S.A. de las siguientes maneras:</p>
+        <ul>
+          <li><strong>Cerrar sesión</strong> desde el botón "Salir" — elimina <code>parqueo_user</code> y <code>token</code>.</li>
+          <li><strong>Limpiar datos del sitio</strong> en la configuración de su navegador (Configuración › Privacidad › Borrar datos de navegación › Cookies y otros datos del sitio).</li>
+          <li><strong>Modo incógnito / privado:</strong> ningún dato persiste entre sesiones.</li>
+        </ul>
+        <p>Eliminar estos datos cerrará su sesión pero <strong>no eliminará su cuenta</strong> ni su historial de reservas del servidor.</p>
+      </div>
+
+      <!-- 6 -->
+      <div class="legal-section">
+        <h2>6. Service Worker y caché offline</h2>
+        <p>RDP S.A. es una PWA que instala un <strong>Service Worker</strong> en su navegador. Este almacena en caché ciertos recursos de la aplicación (HTML, CSS, imágenes) para permitir el uso sin conexión y acelerar la carga. Este caché:</p>
+        <ul>
+          <li>No contiene datos personales.</li>
+          <li>Puede eliminarse desinstalando la aplicación o limpiando el caché del navegador.</li>
+          <li>Se actualiza automáticamente cuando hay una nueva versión de la aplicación.</li>
+        </ul>
+      </div>
+
+      <!-- 7 -->
+      <div class="legal-section">
+        <h2>7. Cambios a esta política</h2>
+        <p>Esta política puede actualizarse para reflejar cambios en las tecnologías que utilizamos. Le notificaremos de cambios significativos a través de la plataforma.</p>
+      </div>
+
+      <div class="legal-footer-links">
+        <a href="terminos.html"><i class="bi bi-file-earmark-text"></i> Términos de Uso</a>
+        <a href="privacidad.html"><i class="bi bi-shield-lock"></i> Política de Privacidad</a>
+        <a href="index.html"><i class="bi bi-house"></i> Volver al inicio</a>
+      </div>
+    </div>
+  </div>
+
+  <script src="app.js"></script>
+  <script>
+    document.addEventListener('DOMContentLoaded', () => {
+      renderNavbar();
+    });
+  </script>
+</body>
+</html>
