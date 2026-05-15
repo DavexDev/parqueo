@@ -76,6 +76,11 @@
           <i class="bi bi-calendar-event icon-inline"></i>Calendario
         </a>
       </li>
+      <li class="nav-item">
+        <a class="nav-link" data-bs-toggle="tab" href="#tabMembresia">
+          <i class="bi bi-star icon-inline"></i>Membresía
+        </a>
+      </li>
     </ul>
 
     <div class="tab-content">
@@ -107,9 +112,96 @@
           </div>
         </div>
       </div>
+
+      <!-- TAB: Membresía -->
+      <div class="tab-pane fade" id="tabMembresia">
+        <div id="seccionMembresia">
+          <!-- Plan actual -->
+          <div id="planActual" class="mb-3" style="background:linear-gradient(135deg,var(--rdp-navy,#0F172A),#1e3a5f);color:#fff;border-radius:14px;padding:1.5rem;">
+            <div style="display:flex;justify-content:space-between;align-items:center;">
+              <div>
+                <div style="font-size:.8rem;opacity:.7;text-transform:uppercase;letter-spacing:.05em;">Plan actual</div>
+                <div style="font-size:1.6rem;font-weight:800;" id="planNombre">Básico (Gratis)</div>
+              </div>
+              <i class="bi bi-patch-check-fill" style="font-size:2.5rem;color:var(--rdp-gold,#D4AF37);"></i>
+            </div>
+            <div style="margin-top:.75rem;font-size:.85rem;opacity:.8;" id="planVigencia"></div>
+          </div>
+
+          <!-- Planes disponibles -->
+          <h6 class="fw-bold mb-3" style="color:var(--rdp-navy);">Actualiza tu plan</h6>
+          <div class="d-flex flex-column gap-3">
+            <!-- Plan Básico -->
+            <div class="card-parqueo p-3" style="border:2px solid #e5e7eb;">
+              <div class="d-flex justify-content-between align-items-start">
+                <div>
+                  <h6 class="fw-bold mb-1">🆓 Básico</h6>
+                  <ul class="mb-0" style="font-size:.85rem;color:#6b7280;padding-left:1.2rem;">
+                    <li>Hasta 2 parqueos publicados</li>
+                    <li>Sin espacios destacados</li>
+                    <li>Comisión estándar 17%</li>
+                  </ul>
+                </div>
+                <div class="text-end">
+                  <div class="fw-bold" style="font-size:1.2rem;">Gratis</div>
+                  <small class="text-muted">siempre</small>
+                </div>
+              </div>
+            </div>
+
+            <!-- Plan Premium -->
+            <div class="card-parqueo p-3" style="border:2px solid var(--rdp-gold,#D4AF37);background:rgba(212,175,55,.04);">
+              <div class="d-flex justify-content-between align-items-start">
+                <div>
+                  <h6 class="fw-bold mb-1">⭐ Premium</h6>
+                  <ul class="mb-0" style="font-size:.85rem;color:#374151;padding-left:1.2rem;">
+                    <li>Parqueos ilimitados</li>
+                    <li>3 espacios destacados en búsqueda</li>
+                    <li>Insignia verificado ✓</li>
+                    <li>Estadísticas avanzadas</li>
+                    <li>Comisión 17% sin cambios</li>
+                  </ul>
+                </div>
+                <div class="text-end">
+                  <div class="fw-bold" style="font-size:1.3rem;color:var(--rdp-navy);">Q200</div>
+                  <small class="text-muted">/mes</small>
+                </div>
+              </div>
+              <button class="btn-main mt-3" style="width:100%;" onclick="activarPremium()">
+                <i class="bi bi-star-fill icon-inline"></i>Activar Premium
+              </button>
+            </div>
+
+            <!-- Plan Negocios -->
+            <div class="card-parqueo p-3" style="border:2px solid #7c3aed;background:rgba(124,58,237,.03);">
+              <div class="d-flex justify-content-between align-items-start">
+                <div>
+                  <h6 class="fw-bold mb-1" style="color:#7c3aed;">🏢 Negocios</h6>
+                  <ul class="mb-0" style="font-size:.85rem;color:#374151;padding-left:1.2rem;">
+                    <li>Todo lo de Premium</li>
+                    <li>Panel multi-parqueo</li>
+                    <li>API de integración</li>
+                    <li>Soporte prioritario</li>
+                    <li>Publicidad en el directorio</li>
+                  </ul>
+                </div>
+                <div class="text-end">
+                  <div class="fw-bold" style="font-size:1.3rem;color:#7c3aed;">Q500</div>
+                  <small class="text-muted">/mes</small>
+                </div>
+              </div>
+              <button class="btn-ghost mt-3" style="width:100%;border-color:#7c3aed;color:#7c3aed;">
+                <i class="bi bi-envelope icon-inline"></i>Contactar ventas
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
     </div>
   </div>
 
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
+  <script src="lib/supabase-client.js"></script>
   <script src="app.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
   <script>
@@ -372,6 +464,30 @@
     function toggleDarkMode() {
       document.body.classList.toggle('dark-mode');
       localStorage.setItem('darkMode', document.body.classList.contains('dark-mode'));
+    }
+
+    async function activarPremium() {
+      const user = getUser();
+      if (!user) return;
+      if (window.rdpSupabase && window.rdpSupabase.isConfigured) {
+        const client = window.rdpSupabase.getClient();
+        const fechaInicio = new Date().toISOString();
+        const fechaFin = new Date(Date.now() + 30*24*3600*1000).toISOString();
+        const { error } = await client.from('memberships').insert({
+          usuario_id: user.id,
+          tipo: 'premium',
+          precio: 200,
+          fecha_inicio: fechaInicio,
+          fecha_fin: fechaFin,
+          estado: 'activo'
+        });
+        if (error) { alert('Error al activar: ' + error.message); return; }
+        document.getElementById('planNombre').textContent = '⭐ Premium';
+        document.getElementById('planVigencia').textContent = `Vigente hasta: ${new Date(fechaFin).toLocaleDateString('es-GT')}`;
+        alert('¡Plan Premium activado! Tu parqueo aparecerá destacado en las búsquedas.');
+      } else {
+        alert('Para activar Premium contacta a RDP S.A. o aplica el schema de base de datos.');
+      }
     }
 
     // Cargar dark mode setting

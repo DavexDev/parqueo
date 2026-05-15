@@ -154,6 +154,36 @@
     return client.from('parkings').update(updates).eq('id', id).select().single();
   }
 
+  async function getVehicleTypes() {
+    const client = getClient();
+    if (!client) return { data: [], error: null };
+    return client.from('vehicle_types').select('*').order('nombre');
+  }
+
+  async function addParkingVehicleTypes(parkingId, vehicleTypeIds) {
+    const client = getClient();
+    if (!client) return { data: null, error: { message: 'Supabase no configurado' } };
+    const rows = vehicleTypeIds.map(vid => ({ parking_id: parkingId, vehicle_type_id: vid }));
+    return client.from('parking_vehicle_types').insert(rows);
+  }
+
+  async function uploadParkingPhoto(parkingId, file, orden = 0, esPrincipal = false) {
+    const client = getClient();
+    if (!client) return { data: null, error: { message: 'Supabase no configurado' } };
+    const ext = file.name.split('.').pop();
+    const path = `${parkingId}/${Date.now()}.${ext}`;
+    const { data: uploadData, error: uploadError } = await client.storage.from('parkings').upload(path, file);
+    if (uploadError) return { data: null, error: uploadError };
+    const { data: { publicUrl } } = client.storage.from('parkings').getPublicUrl(path);
+    return client.from('parking_photos').insert({
+      parking_id: parkingId,
+      url: publicUrl,
+      storage_path: path,
+      orden,
+      es_principal: esPrincipal
+    }).select().single();
+  }
+
   // ── Reservas ─────────────────────────────────────────────────
 
   async function createReservation(data) {
@@ -297,6 +327,9 @@
     getParkingById,
     createParking,
     updateParking,
+    getVehicleTypes,
+    addParkingVehicleTypes,
+    uploadParkingPhoto,
     // Reservaciones
     createReservation,
     getUserReservations,

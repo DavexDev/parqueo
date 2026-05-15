@@ -3,56 +3,129 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Métricas del Sistema</title>
+  <title>Métricas del Sistema — RDP S.A.</title>
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css">
   <link rel="stylesheet" href="styles.css">
+  <style>
+    .metric-card { background:#fff; border-radius:14px; padding:1.2rem; box-shadow:0 2px 12px rgba(0,0,0,.06); border-left:4px solid var(--rdp-navy); }
+    .metric-val { font-size:2rem; font-weight:800; color:var(--rdp-navy); }
+    .metric-label { font-size:.78rem; color:#6b7280; text-transform:uppercase; letter-spacing:.05em; }
+    .metric-card.gold { border-left-color:var(--rdp-gold,#D4AF37); }
+    .metric-card.green { border-left-color:#22c55e; }
+    .metric-card.red { border-left-color:#ef4444; }
+  </style>
 </head>
 <body>
   <nav class="navbar navbar-dark navbar-parqueo">
     <div class="container-fluid">
-      <a class="navbar-brand text-white fw-bold" href="index.html"><i class="bi bi-p-circle-fill icon-inline"></i>Parqueos</a>
+      <a class="navbar-brand" href="index.html"><div class="navbar-brand-logo">R</div>RDP S.A.</a>
+      <span id="navUser"></span>
     </div>
   </nav>
 
   <div class="page-container">
-    <h2 class="section-title"><i class="bi bi-bar-chart-line-fill icon-inline"></i>Métricas clave</h2>
-    <p class="text-muted text-center mb-4" style="font-size:0.9rem;">Datos de demostración del sistema</p>
-    <div class="row g-3" id="metricas"></div>
+    <h2 class="section-title"><i class="bi bi-bar-chart-line-fill icon-inline"></i>Métricas del sistema</h2>
+    <p class="text-muted text-center mb-4" style="font-size:.85rem;" id="fuenteDatos">Cargando datos...</p>
+
+    <div class="row g-3 mb-4" id="metricas"></div>
+
+    <div class="card-parqueo p-3" id="seccionComisiones" style="display:none;">
+      <h6 class="fw-bold mb-3" style="color:var(--rdp-navy);"><i class="bi bi-cash-stack icon-inline"></i>Ingresos RDP (17% comisión)</h6>
+      <div class="row g-2" id="ingresosDetalle"></div>
+    </div>
   </div>
 
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
+  <script src="lib/supabase-client.js"></script>
   <script src="app.js"></script>
   <script>
-    document.addEventListener('DOMContentLoaded', () => { renderNavbar(); renderBottomBar('metrics'); });
-    fetch('/api/metrics')
-      .then(r => r.json())
-      .then(m => {
-        document.getElementById('metricas').innerHTML = `
+    document.addEventListener('DOMContentLoaded', async () => {
+      renderNavbar();
+      renderBottomBar('metrics');
+      await cargarMetricas();
+    });
+
+    async function cargarMetricas() {
+      let m = null, fuente = 'API local';
+
+      if (window.rdpSupabase && window.rdpSupabase.isConfigured) {
+        // Query admin_metrics view desde Supabase
+        try {
+          const client = window.rdpSupabase.getClient();
+          const { data } = await client.from('admin_metrics').select('*').single();
+          if (data) {
+            fuente = 'Supabase (datos reales)';
+            m = {
+              parqueos: data.total_parqueos ?? 0,
+              parqueosActivos: data.parqueos_activos ?? 0,
+              reservas: data.total_reservas ?? 0,
+              ingresosRdpTotal: data.ingresos_rdp_total ?? 0,
+              ingresosRdpMes: data.ingresos_rdp_mes ?? 0,
+              reservasMes: data.reservas_mes ?? 0,
+              usuarios: data.total_usuarios ?? 0
+            };
+          }
+        } catch(e) { console.warn('admin_metrics no disponible, usando API'); }
+      }
+
+      if (!m) {
+        // Fallback API local
+        try {
+          const r = await fetch('/api/metrics');
+          const d = await r.json();
+          m = { parqueos: d.parqueos, reservas: d.reservas, parqueosActivos: d.parqueos, ingresosRdpTotal: 0, ingresosRdpMes: 0, reservasMes: 0, usuarios: 0 };
+        } catch { m = { parqueos:0, reservas:0, parqueosActivos:0, ingresosRdpTotal:0, ingresosRdpMes:0, reservasMes:0, usuarios:0 }; }
+      }
+
+      document.getElementById('fuenteDatos').textContent = `Fuente: ${fuente}`;
+
+      const fmtQ = v => `Q${Number(v).toLocaleString('es-GT', {minimumFractionDigits:2, maximumFractionDigits:2})}`;
+
+      document.getElementById('metricas').innerHTML = `
+        <div class="col-6"><div class="metric-card">
+          <div class="metric-val">${m.parqueosActivos || m.parqueos}</div>
+          <div class="metric-label"><i class="bi bi-car-front icon-inline"></i>Parqueos activos</div>
+        </div></div>
+        <div class="col-6"><div class="metric-card gold">
+          <div class="metric-val">${m.reservas}</div>
+          <div class="metric-label"><i class="bi bi-calendar-check icon-inline"></i>Reservas totales</div>
+        </div></div>
+        <div class="col-6"><div class="metric-card green">
+          <div class="metric-val">${m.reservasMes || '—'}</div>
+          <div class="metric-label"><i class="bi bi-graph-up-arrow icon-inline"></i>Reservas este mes</div>
+        </div></div>
+        <div class="col-6"><div class="metric-card">
+          <div class="metric-val">${m.usuarios || '—'}</div>
+          <div class="metric-label"><i class="bi bi-people icon-inline"></i>Usuarios registrados</div>
+        </div></div>
+        <div class="col-6"><div class="metric-card gold">
+          <div class="metric-val" style="font-size:1.4rem;">${fmtQ(m.ingresosRdpMes)}</div>
+          <div class="metric-label"><i class="bi bi-cash icon-inline"></i>Ingresos RDP este mes</div>
+        </div></div>
+        <div class="col-6"><div class="metric-card gold">
+          <div class="metric-val" style="font-size:1.4rem;">${fmtQ(m.ingresosRdpTotal)}</div>
+          <div class="metric-label"><i class="bi bi-cash-stack icon-inline"></i>Ingresos RDP totales</div>
+        </div></div>
+      `;
+
+      if (m.ingresosRdpTotal > 0) {
+        document.getElementById('seccionComisiones').style.display = '';
+        const ingresosAnfitriones = m.ingresosRdpTotal / 0.17 * 0.83;
+        document.getElementById('ingresosDetalle').innerHTML = `
           <div class="col-6">
-            <div class="stat-card-new" style="border-left:4px solid var(--primary);">
-              <div class="stat-value">${m.parqueos}</div>
-              <div class="stat-label"><i class="bi bi-p-circle icon-inline"></i>Parqueos registrados</div>
+            <div style="background:#f0fdf4;border-radius:10px;padding:12px;text-align:center;">
+              <div style="font-size:1.1rem;font-weight:700;color:#16a34a;">${fmtQ(m.ingresosRdpTotal)}</div>
+              <small class="text-muted">RDP (17%)</small>
             </div>
           </div>
           <div class="col-6">
-            <div class="stat-card-new" style="border-left:4px solid var(--accent);">
-              <div class="stat-value">${m.reservas}</div>
-              <div class="stat-label"><i class="bi bi-calendar-check icon-inline"></i>Reservas realizadas</div>
+            <div style="background:#eff6ff;border-radius:10px;padding:12px;text-align:center;">
+              <div style="font-size:1.1rem;font-weight:700;color:#1d4ed8;">${fmtQ(ingresosAnfitriones)}</div>
+              <small class="text-muted">Anfitriones (83%)</small>
             </div>
-          </div>
-          <div class="col-6">
-            <div class="stat-card-new" style="border-left:4px solid #ff9800;">
-              <div class="stat-value">${m.ocupacion}%</div>
-              <div class="stat-label"><i class="bi bi-graph-up-arrow icon-inline"></i>Ocupación</div>
-            </div>
-          </div>
-          <div class="col-6">
-            <div class="stat-card-new" style="border-left:4px solid #9c27b0;">
-              <div class="stat-value">${m.tiempoBusqueda} min</div>
-              <div class="stat-label"><i class="bi bi-stopwatch icon-inline"></i>Tiempo búsqueda</div>
-            </div>
-          </div>
-        `;
-      });
+          </div>`;
+      }
+    }
   </script>
 </body>
 </html>

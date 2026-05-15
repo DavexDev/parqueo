@@ -3,90 +3,396 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Reservar Parqueo</title>
+  <title>Reservar Parqueo — RDP S.A.</title>
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css">
   <link rel="stylesheet" href="styles.css">
+  <style>
+    .tipo-reserva-btn { flex:1; padding:.75rem; border:2px solid #e5e7eb; border-radius:10px; background:#fff; font-weight:600; font-size:.9rem; transition:all .15s; cursor:pointer; }
+    .tipo-reserva-btn.active { border-color:var(--rdp-navy); background:var(--rdp-navy); color:#fff; }
+    .pago-card { padding:14px; border:2px solid #e5e7eb; border-radius:12px; cursor:pointer; transition:all .15s; }
+    .pago-card:has(input:checked) { border-color:var(--rdp-navy); background:rgba(15,23,42,.04); }
+    .pago-card input[type=radio] { accent-color:var(--rdp-navy); }
+    .precio-preview { background:linear-gradient(135deg,var(--rdp-navy),#1e3a5f); color:#fff; border-radius:14px; padding:1.2rem; text-align:center; }
+    .comprobante { background:#fff; border:2px solid var(--rdp-gold,#D4AF37); border-radius:16px; padding:1.5rem; }
+    .comprobante-codigo { font-size:2rem; font-weight:800; letter-spacing:.15em; color:var(--rdp-navy); text-align:center; font-family:monospace; }
+  </style>
 </head>
 <body>
   <nav class="navbar navbar-dark navbar-parqueo">
     <div class="container-fluid">
-      <a class="navbar-brand text-white fw-bold" href="index.html"><i class="bi bi-p-circle-fill icon-inline"></i>Parqueos</a>
+      <a class="navbar-brand" href="parkings.html"><i class="bi bi-arrow-left me-1"></i>RDP S.A.</a>
+      <span id="navUser"></span>
     </div>
   </nav>
 
   <div class="page-container">
-    <h2 class="section-title"><i class="bi bi-calendar-check icon-inline"></i>Reservar parqueo</h2>
+    <!-- Info del parqueo -->
     <div id="infoParqueo" class="mb-3"></div>
-    <div id="mapaParqueo" class="mb-3"></div>
-    <form id="formReserva" class="card-parqueo p-3">
-      <div class="mb-3">
-        <label for="fecha" class="form-label">Fecha de visita</label>
-        <input type="date" class="form-control" id="fecha" required>
-      </div>
-      <button type="submit" class="btn-main"><i class="bi bi-calendar-check icon-inline"></i>Reservar ahora</button>
-    </form>
-    <div id="estadoReserva" class="mt-3"></div>
-  </div>
 
-  <script src="app.js"></script>
-  <script>
-    const user = requireLogin(['visitante']);
-    if (!user) throw new Error('No session');
-    document.addEventListener('DOMContentLoaded', () => { renderNavbar(); renderBottomBar('parkings'); });
-    const urlParams = new URLSearchParams(window.location.search);
-    const parqueoId = urlParams.get('id');
-    let parqueo;
-    fetch('/api/parkings')
-      .then(r => r.json())
-      .then(data => {
-        parqueo = data.find(p => p.id == parqueoId);
-        if (!parqueo) {
-          document.getElementById('infoParqueo').innerHTML = '<div class="alert alert-danger alert-parqueo">Parqueo no encontrado</div>';
-          document.getElementById('formReserva').style.display = 'none';
-          document.getElementById('mapaParqueo').innerHTML = '';
-        } else {
-          const icon = parqueo.tipo === 'moto' ? 'bi-bicycle' : 'bi-car-front-fill';
-          document.getElementById('infoParqueo').innerHTML = `
-            <div class="card-parqueo p-3">
-              <div class="d-flex align-items-center gap-3 mb-2">
-                <div class="parking-icon"><i class="bi ${icon}"></i></div>
+    <!-- Formulario -->
+    <div id="seccionFormulario">
+      <form id="formReserva">
+
+        <!-- Tipo de reserva -->
+        <div class="card-parqueo p-3 mb-3">
+          <h6 class="fw-bold mb-2" style="color:var(--rdp-navy);"><i class="bi bi-clock icon-inline"></i>Tipo de reserva</h6>
+          <div class="d-flex gap-2">
+            <button type="button" class="tipo-reserva-btn active" id="btnHora" onclick="setTipoReserva('hora')"><i class="bi bi-clock"></i> Por hora</button>
+            <button type="button" class="tipo-reserva-btn" id="btnDia" onclick="setTipoReserva('dia')"><i class="bi bi-calendar"></i> Por día</button>
+          </div>
+        </div>
+
+        <!-- Fechas y horarios -->
+        <div class="card-parqueo p-3 mb-3">
+          <h6 class="fw-bold mb-2" style="color:var(--rdp-navy);"><i class="bi bi-calendar-event icon-inline"></i>Fecha y hora</h6>
+
+          <div id="seccionHora">
+            <div class="mb-2">
+              <label class="form-label fw-semibold">Fecha *</label>
+              <input type="date" class="form-control" id="fecha" required oninput="calcularPrecio()">
+            </div>
+            <div class="row g-2">
+              <div class="col-6">
+                <label class="form-label fw-semibold">Hora inicio *</label>
+                <input type="time" class="form-control" id="hora_inicio" required oninput="calcularPrecio()">
+              </div>
+              <div class="col-6">
+                <label class="form-label fw-semibold">Hora fin *</label>
+                <input type="time" class="form-control" id="hora_fin" required oninput="calcularPrecio()">
+              </div>
+            </div>
+          </div>
+
+          <div id="seccionDia" style="display:none;">
+            <div class="row g-2">
+              <div class="col-6">
+                <label class="form-label fw-semibold">Fecha inicio *</label>
+                <input type="date" class="form-control" id="fecha_inicio" oninput="calcularPrecio()">
+              </div>
+              <div class="col-6">
+                <label class="form-label fw-semibold">Fecha fin *</label>
+                <input type="date" class="form-control" id="fecha_fin" oninput="calcularPrecio()">
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Vista previa precio -->
+        <div class="precio-preview mb-3" id="precioPreview">
+          <div style="font-size:.8rem;opacity:.7;text-transform:uppercase;letter-spacing:.05em;">Total estimado</div>
+          <div style="font-size:2.5rem;font-weight:800;" id="precioTotal">Q—</div>
+          <div style="font-size:.82rem;opacity:.75;" id="precioDetalle">Selecciona fecha y hora</div>
+        </div>
+
+        <!-- Método de pago -->
+        <div class="card-parqueo p-3 mb-3">
+          <h6 class="fw-bold mb-2" style="color:var(--rdp-navy);"><i class="bi bi-credit-card icon-inline"></i>Método de pago</h6>
+          <div class="d-flex flex-column gap-2">
+            <label class="pago-card">
+              <div class="d-flex align-items-center gap-3">
+                <input type="radio" name="metodo_pago" value="en_linea" required>
                 <div>
-                  <h5 class="fw-bold mb-0">${parqueo.nombre}</h5>
-                  <small class="text-muted">${parqueo.direccion}</small>
+                  <div class="fw-bold">&#128179; En línea</div>
+                  <small class="text-muted">Pago seguro con tarjeta (próximamente)</small>
                 </div>
               </div>
-              <div class="d-flex gap-2 mb-2">
-                <span class="badge-tipo">${parqueo.tipo}</span>
-                <span class="badge-precio">Q${parqueo.precio}</span>
+            </label>
+            <label class="pago-card">
+              <div class="d-flex align-items-center gap-3">
+                <input type="radio" name="metodo_pago" value="al_llegar" checked>
+                <div>
+                  <div class="fw-bold">&#129309; Al llegar</div>
+                  <small class="text-muted">Pago en efectivo al anfitrion</small>
+                </div>
               </div>
-              <a href="https://maps.google.com/?q=${parqueo.lat},${parqueo.lng}" target="_blank" rel="noopener" class="btn-ghost" style="padding:0.5rem;font-size:0.9rem;"><i class="bi bi-geo-alt icon-inline"></i>Abrir en Google Maps</a>
+            </label>
+            <label class="pago-card">
+              <div class="d-flex align-items-center gap-3">
+                <input type="radio" name="metodo_pago" value="anticipo">
+                <div>
+                  <div class="fw-bold">&#128176; Con anticipo</div>
+                  <small class="text-muted">50% ahora, 50% al llegar</small>
+                </div>
+              </div>
+            </label>
+          </div>
+        </div>
+
+        <!-- Info vehículo (opcional) -->
+        <div class="card-parqueo p-3 mb-3">
+          <h6 class="fw-bold mb-2" style="color:var(--rdp-navy);"><i class="bi bi-car-front icon-inline"></i>Información del vehículo (opcional)</h6>
+          <div class="row g-2">
+            <div class="col-6">
+              <input type="text" class="form-control" id="placa" placeholder="Placa (ej: ABC-123)" maxlength="10">
             </div>
-          `;
-          document.getElementById('mapaParqueo').innerHTML = `
-            <iframe width="100%" height="200" style="border:0;border-radius:14px;" loading="lazy" allowfullscreen
-              referrerpolicy="no-referrer-when-downgrade"
-              src="https://www.google.com/maps?q=${parqueo.lat},${parqueo.lng}&hl=es&z=17&output=embed">
-            </iframe>
-          `;
-        }
-      });
-    document.getElementById('formReserva').addEventListener('submit', function(e) {
-      e.preventDefault();
-      const fecha = document.getElementById('fecha').value;
-      fetch('/api/reservations', {
-        method: 'POST',
-        headers: getHeaders(),
-        body: JSON.stringify({ parqueoId: Number(parqueoId), usuarioId: user.id, fecha })
-      })
-      .then(r => r.json())
-      .then(resp => {
-        if (resp.success) {
-          document.getElementById('estadoReserva').innerHTML = `<div class='alert alert-success alert-parqueo'><i class="bi bi-check-circle-fill icon-inline"></i>Reserva creada. Estado: <b>${resp.reserva.estado}</b></div>`;
-        } else {
-          document.getElementById('estadoReserva').innerHTML = `<div class='alert alert-danger alert-parqueo'>Error al reservar</div>`;
-        }
-      });
+            <div class="col-6">
+              <input type="text" class="form-control" id="color_vehiculo" placeholder="Color" maxlength="30">
+            </div>
+          </div>
+        </div>
+
+        <button type="submit" class="btn-accent" id="btnReservar" style="width:100%;padding:1rem;font-size:1rem;">
+          <i class="bi bi-calendar-check icon-inline"></i>Confirmar reserva
+        </button>
+      </form>
+    </div>
+
+    <!-- Comprobante (oculto inicialmente) -->
+    <div id="seccionComprobante" style="display:none;">
+      <div class="comprobante mb-3">
+        <div class="text-center mb-3">
+          <i class="bi bi-check-circle-fill" style="font-size:3rem;color:#22c55e;"></i>
+          <h5 class="fw-bold mt-2" style="color:var(--rdp-navy);">Reserva confirmada</h5>
+        </div>
+        <div class="text-center mb-3">
+          <small class="text-muted">Código de reserva</small>
+          <div class="comprobante-codigo" id="codigoReserva">--------</div>
+          <small class="text-muted">Muestra este código al anfitrion</small>
+        </div>
+        <hr>
+        <div id="detalleComprobante"></div>
+        <div class="d-flex gap-2 mt-3">
+          <button onclick="window.print()" class="btn-ghost" style="flex:1;"><i class="bi bi-printer icon-inline"></i>Imprimir</button>
+          <a href="parkings.html" class="btn-main" style="flex:1;text-align:center;"><i class="bi bi-search icon-inline"></i>Buscar más</a>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
+  <script src="lib/supabase-client.js"></script>
+  <script src="app.js"></script>
+  <script>
+    const user = requireLogin(['visitante','anfitrion','admin']);
+    const urlParams = new URLSearchParams(window.location.search);
+    const parqueoId = urlParams.get('id');
+    let parqueo = null, tipoReserva = 'hora';
+
+    document.addEventListener('DOMContentLoaded', async () => {
+      renderNavbar();
+      // Fecha mínima hoy
+      const hoy = new Date().toISOString().split('T')[0];
+      document.getElementById('fecha').min = hoy;
+      document.getElementById('fecha').value = hoy;
+      document.getElementById('fecha_inicio').min = hoy;
+      document.getElementById('fecha_inicio').value = hoy;
+      document.getElementById('fecha_fin').min = hoy;
+      // Hora inicio por defecto: ahora + 1 hora
+      const ahora = new Date();
+      ahora.setHours(ahora.getHours()+1, 0, 0);
+      document.getElementById('hora_inicio').value = `${String(ahora.getHours()).padStart(2,'0')}:00`;
+      document.getElementById('hora_fin').value = `${String(ahora.getHours()+1).padStart(2,'0')}:00`;
+
+      await cargarParqueo();
+      calcularPrecio();
     });
+
+    async function cargarParqueo() {
+      if (!parqueoId) { mostrarError('ID de parqueo no especificado'); return; }
+
+      let datos = null;
+      if (window.rdpSupabase && window.rdpSupabase.isConfigured) {
+        const { data } = await window.rdpSupabase.getParkingById(parqueoId);
+        datos = data;
+      } else {
+        try {
+          const r = await fetch('/api/parkings');
+          const lista = await r.json();
+          datos = Array.isArray(lista) ? lista.find(p => String(p.id) === String(parqueoId)) : null;
+        } catch { datos = null; }
+      }
+
+      if (!datos) { mostrarError('Parqueo no encontrado'); return; }
+      parqueo = datos;
+
+      const tipos = Array.isArray(parqueo.tipos_vehiculo) ? parqueo.tipos_vehiculo : (parqueo.tipo ? [parqueo.tipo] : []);
+      const tiposHtml = tipos.map(t => `<span style="padding:2px 10px;background:rgba(15,23,42,.08);border-radius:20px;font-size:.78rem;font-weight:600;margin-right:4px;">${t}</span>`).join('');
+      const gmapsUrl = `https://www.google.com/maps/dir/?api=1&destination=${parqueo.lat},${parqueo.lng}`;
+      const precioHora = parqueo.precio_hora ?? parqueo.precio;
+      const precioDia = parqueo.precio_dia;
+      const fotoHtml = parqueo.foto_principal
+        ? `<img src="${parqueo.foto_principal}" style="width:100%;height:160px;object-fit:cover;border-radius:12px 12px 0 0;">`
+        : `<div style="width:100%;height:100px;background:linear-gradient(135deg,var(--rdp-navy),#1e3a5f);border-radius:12px 12px 0 0;display:flex;align-items:center;justify-content:center;"><i class="bi bi-car-front-fill" style="font-size:2.5rem;color:rgba(255,255,255,.3);"></i></div>`;
+
+      document.getElementById('infoParqueo').innerHTML = `
+        <div class="card-parqueo mb-3" style="overflow:hidden;">
+          ${fotoHtml}
+          <div class="p-3">
+            <h5 class="fw-bold mb-1" style="color:var(--rdp-navy);">${parqueo.nombre}</h5>
+            <small class="text-muted"><i class="bi bi-geo-alt-fill icon-inline"></i>${parqueo.direccion || ''}</small>
+            <div class="mt-2 mb-2">${tiposHtml}</div>
+            <div class="d-flex gap-3 mb-2">
+              ${precioHora != null ? `<div><small class="text-muted d-block">Por hora</small><b style="color:var(--rdp-navy);">Q${precioHora}</b></div>` : ''}
+              ${precioDia != null ? `<div><small class="text-muted d-block">Por día</small><b style="color:var(--rdp-navy);">Q${precioDia}</b></div>` : ''}
+            </div>
+            ${(parqueo.lat && parqueo.lng) ? `<a href="${gmapsUrl}" target="_blank" rel="noopener" class="btn-ghost" style="padding:.5rem;font-size:.85rem;display:inline-block;"><i class="bi bi-geo-alt icon-inline"></i>Cómo llegar</a>` : ''}
+            ${parqueo.lat && parqueo.lng ? `<iframe class="mt-2" width="100%" height="160" style="border:0;border-radius:10px;" loading="lazy" src="https://www.google.com/maps?q=${parqueo.lat},${parqueo.lng}&hl=es&z=17&output=embed"></iframe>` : ''}
+          </div>
+        </div>`;
+
+      calcularPrecio();
+    }
+
+    function setTipoReserva(tipo) {
+      tipoReserva = tipo;
+      document.getElementById('btnHora').classList.toggle('active', tipo === 'hora');
+      document.getElementById('btnDia').classList.toggle('active', tipo === 'dia');
+      document.getElementById('seccionHora').style.display = tipo === 'hora' ? '' : 'none';
+      document.getElementById('seccionDia').style.display = tipo === 'dia' ? '' : 'none';
+      calcularPrecio();
+    }
+
+    function calcularPrecio() {
+      const precioHora = parqueo?.precio_hora ?? parqueo?.precio ?? 15;
+      const precioDia = parqueo?.precio_dia ?? 120;
+      let total = null, detalle = '';
+
+      if (tipoReserva === 'hora') {
+        const f = document.getElementById('fecha').value;
+        const hi = document.getElementById('hora_inicio').value;
+        const hf = document.getElementById('hora_fin').value;
+        if (f && hi && hf) {
+          const inicio = new Date(`${f}T${hi}`);
+          const fin = new Date(`${f}T${hf}`);
+          const horas = (fin - inicio) / 3600000;
+          if (horas > 0) {
+            total = Math.round(horas * precioHora * 100) / 100;
+            detalle = `${horas.toFixed(1)} hora${horas !== 1 ? 's' : ''} × Q${precioHora}/hr`;
+          } else { detalle = 'La hora fin debe ser después de la inicio'; }
+        }
+      } else {
+        const fi = document.getElementById('fecha_inicio').value;
+        const ff = document.getElementById('fecha_fin').value;
+        if (fi && ff) {
+          const dias = Math.round((new Date(ff) - new Date(fi)) / 86400000) + 1;
+          if (dias > 0) {
+            total = dias * precioDia;
+            detalle = `${dias} día${dias !== 1 ? 's' : ''} × Q${precioDia}/día`;
+          }
+        }
+      }
+
+      document.getElementById('precioTotal').textContent = total != null ? `Q${total.toFixed(2)}` : 'Q—';
+      document.getElementById('precioDetalle').textContent = detalle || 'Selecciona fecha y hora';
+    }
+
+    document.getElementById('formReserva').addEventListener('submit', async function(e) {
+      e.preventDefault();
+      if (!parqueo) return;
+
+      const btn = document.getElementById('btnReservar');
+      btn.disabled = true;
+      btn.innerHTML = '<span class="spinner-border spinner-border-sm"></span> Procesando...';
+
+      const metodo_pago = document.querySelector('input[name="metodo_pago"]:checked')?.value || 'al_llegar';
+      const precioHora = parqueo.precio_hora ?? parqueo.precio ?? 15;
+      const precioDia = parqueo.precio_dia ?? 120;
+
+      let fecha_inicio, fecha_fin, precio_unitario, cantidad_unidades, precio_total;
+
+      try {
+        if (tipoReserva === 'hora') {
+          const f = document.getElementById('fecha').value;
+          const hi = document.getElementById('hora_inicio').value;
+          const hf = document.getElementById('hora_fin').value;
+          if (!f || !hi || !hf) throw new Error('Completa la fecha y hora');
+          fecha_inicio = new Date(`${f}T${hi}`).toISOString();
+          fecha_fin = new Date(`${f}T${hf}`).toISOString();
+          const horas = (new Date(fecha_fin) - new Date(fecha_inicio)) / 3600000;
+          if (horas <= 0) throw new Error('La hora fin debe ser después de la inicio');
+          precio_unitario = precioHora;
+          cantidad_unidades = horas;
+          precio_total = Math.round(horas * precioHora * 100) / 100;
+        } else {
+          const fi = document.getElementById('fecha_inicio').value;
+          const ff = document.getElementById('fecha_fin').value;
+          if (!fi || !ff) throw new Error('Completa las fechas');
+          fecha_inicio = new Date(fi).toISOString();
+          fecha_fin = new Date(ff).toISOString();
+          const dias = Math.round((new Date(ff) - new Date(fi)) / 86400000) + 1;
+          if (dias <= 0) throw new Error('Fechas inválidas');
+          precio_unitario = precioDia;
+          cantidad_unidades = dias;
+          precio_total = dias * precioDia;
+        }
+
+        const reservationData = {
+          parking_id: parqueo.id,
+          usuario_id: user.id,
+          tipo: tipoReserva,
+          fecha_inicio,
+          fecha_fin,
+          metodo_pago,
+          precio_unitario,
+          cantidad_unidades,
+          precio_subtotal: precio_total,
+          precio_total,
+          placa: document.getElementById('placa').value.trim() || null,
+          color_vehiculo: document.getElementById('color_vehiculo').value.trim() || null,
+          estado: 'pendiente'
+        };
+
+        let reserva;
+        if (window.rdpSupabase && window.rdpSupabase.isConfigured) {
+          const { data, error } = await window.rdpSupabase.createReservation(reservationData);
+          if (error) throw new Error(error.message);
+          reserva = data;
+        } else {
+          const r = await fetch('/api/reservations', {
+            method: 'POST',
+            headers: getHeaders(),
+            body: JSON.stringify({
+              parqueoId: parqueo.id,
+              usuarioId: user.id,
+              fecha: fecha_inicio.split('T')[0],
+              fechaInicio: fecha_inicio,
+              fechaFin: fecha_fin,
+              tipo: tipoReserva,
+              metodo_pago,
+              precio_total
+            })
+          });
+          const d = await r.json();
+          if (!d.success) throw new Error(d.error || 'Error al reservar');
+          reserva = d.reserva;
+        }
+
+        mostrarComprobante(reserva, precio_total, fecha_inicio, fecha_fin);
+      } catch(err) {
+        alert(err.message);
+      } finally {
+        btn.disabled = false;
+        btn.innerHTML = '<i class="bi bi-calendar-check icon-inline"></i>Confirmar reserva';
+      }
+    });
+
+    function mostrarComprobante(reserva, total, inicio, fin) {
+      document.getElementById('seccionFormulario').style.display = 'none';
+      document.getElementById('seccionComprobante').style.display = 'block';
+      window.scrollTo(0, 0);
+
+      const codigo = reserva?.codigo_reserva || reserva?.id?.toString().slice(-8).toUpperCase() || '--------';
+      document.getElementById('codigoReserva').textContent = codigo;
+
+      const metodoLabels = { en_linea:'En línea', al_llegar:'Al llegar', anticipo:'Con anticipo' };
+      const metodo = document.querySelector('input[name="metodo_pago"]:checked')?.value || 'al_llegar';
+      const fmtFecha = d => d ? new Date(d).toLocaleString('es-GT', { dateStyle:'medium', timeStyle:'short' }) : '-';
+
+      document.getElementById('detalleComprobante').innerHTML = `
+        <div style="font-size:.9rem;">
+          <div class="d-flex justify-content-between py-2 border-bottom"><span class="text-muted">Parqueo</span><b>${parqueo?.nombre || '-'}</b></div>
+          <div class="d-flex justify-content-between py-2 border-bottom"><span class="text-muted">Tipo</span><b>${tipoReserva === 'hora' ? 'Por hora' : 'Por día'}</b></div>
+          <div class="d-flex justify-content-between py-2 border-bottom"><span class="text-muted">Inicio</span><b>${fmtFecha(inicio)}</b></div>
+          <div class="d-flex justify-content-between py-2 border-bottom"><span class="text-muted">Fin</span><b>${fmtFecha(fin)}</b></div>
+          <div class="d-flex justify-content-between py-2 border-bottom"><span class="text-muted">Método de pago</span><b>${metodoLabels[metodo]||metodo}</b></div>
+          <div class="d-flex justify-content-between py-2 fw-bold" style="font-size:1.1rem;"><span>Total</span><span style="color:var(--rdp-navy);">Q${total.toFixed(2)}</span></div>
+        </div>`;
+    }
+
+    function mostrarError(msg) {
+      document.getElementById('infoParqueo').innerHTML = `<div class="alert alert-danger alert-parqueo">${msg}</div>`;
+      document.getElementById('seccionFormulario').style.display = 'none';
+    }
   </script>
 </body>
 </html>

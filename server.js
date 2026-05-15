@@ -82,9 +82,17 @@ async function listParkingsAdminRecords() {
     return { ...p, anfitrionNombre: anfitrion ? anfitrion.nombre : 'Desconocido' };
   });
 }
-async function createParkingRecord({ anfitrionId, nombre, tipo, precio, direccion, lat, lng }) {
-  if (hasDatabaseConfig()) return parkingRepository.createParking({ anfitrionId, nombre, tipo, precio, direccion, lat, lng });
-  const nuevo = { id: getNextMockId(parqueos), anfitrionId, nombre, tipo, precio, direccion, lat, lng, disponible: true, fotos: [] };
+async function createParkingRecord({ anfitrionId, nombre, tipo, precio, precio_hora, precio_dia, direccion, lat, lng, capacidad, descripcion }) {
+  if (hasDatabaseConfig()) return parkingRepository.createParking({ anfitrionId, nombre, tipo, precio: precio_hora || precio || 15, direccion, lat, lng });
+  const nuevo = {
+    id: getNextMockId(parqueos), anfitrionId, nombre, tipo,
+    tipos_vehiculo: [tipo],
+    precio: precio_hora || precio || 15,
+    precio_hora: precio_hora || precio || 15,
+    precio_dia: precio_dia || 120,
+    direccion, lat, lng, disponible: true, fotos: [],
+    capacidad: capacidad || null, descripcion: descripcion || null
+  };
   parqueos.push(nuevo);
   return nuevo;
 }
@@ -122,13 +130,14 @@ async function listReservationsAdminRecords() {
     return { ...r, usuarioNombre: user ? user.nombre : 'N/A', parqueoNombre: park ? park.nombre : 'N/A' };
   });
 }
-async function createReservationRecord({ parqueoId, usuarioId, fecha, fechaInicio, fechaFin }) {
+async function createReservationRecord({ parqueoId, usuarioId, fecha, fechaInicio, fechaFin, tipo, metodo_pago, precio_total, codigo_reserva }) {
   if (hasDatabaseConfig()) {
     const inicio = fechaInicio || fecha;
     const fin = fechaFin || fecha;
     return reservationRepository.createReservation({ parqueoId, usuarioId, fechaInicio: inicio, fechaFin: fin });
   }
-  const reserva = { id: getNextMockId(reservas), parqueoId, usuarioId, fecha, fechaInicio, fechaFin, estado: 'pendiente' };
+  const code = codigo_reserva || Math.random().toString(36).slice(2, 10).toUpperCase();
+  const reserva = { id: getNextMockId(reservas), parqueoId, usuarioId, fecha, fechaInicio, fechaFin, tipo: tipo||'hora', metodo_pago: metodo_pago||'al_llegar', precio_total: precio_total||0, codigo_reserva: code, estado: 'pendiente' };
   reservas.push(reserva);
   return reserva;
 }
@@ -187,11 +196,12 @@ let usuarios = [
   { id: 3, nombre: 'Admin', rol: 'admin', email: 'admin@parqueos.com' }
 ];
 let parqueos = [
-  { id: 1, anfitrionId: 2, nombre: 'Parqueo Centro', tipo: 'auto', precio: 30, disponible: true, lat: 14.566, lng: -89.355, direccion: 'Calle Real 1', fotos: ['parqueo1.jpg'] },
-  { id: 2, anfitrionId: 2, nombre: 'Parqueo Norte', tipo: 'moto', precio: 15, disponible: true, lat: 14.567, lng: -89.356, direccion: 'Calle Norte 2', fotos: ['parqueo2.jpg'] }
+  { id: 1, anfitrionId: 2, nombre: 'Parqueo Centro', tipo: 'Carro', tipos_vehiculo: ['Carro', 'Pickup'], precio: 15, precio_hora: 15, precio_dia: 120, disponible: true, lat: 14.566, lng: -89.355, direccion: 'Calle Real 1, Zona 1', fotos: [], calificacion_promedio: 4.5 },
+  { id: 2, anfitrionId: 2, nombre: 'Parqueo Norte', tipo: 'Moto', tipos_vehiculo: ['Moto', 'Bicicleta'], precio: 10, precio_hora: 10, precio_dia: 80, disponible: true, lat: 14.567, lng: -89.356, direccion: 'Calle Norte 2, Zona 2', fotos: [], calificacion_promedio: 4.0 },
+  { id: 3, anfitrionId: 2, nombre: 'Parqueo El Calvario', tipo: 'Carro', tipos_vehiculo: ['Carro', 'Pickup', 'Camioneta'], precio: 20, precio_hora: 20, precio_dia: 150, disponible: true, lat: 14.565, lng: -89.354, direccion: '4a Calle, Zona 1', fotos: [], calificacion_promedio: 5.0 }
 ];
 let reservas = [
-  { id: 1, parqueoId: 1, usuarioId: 1, estado: 'pendiente', fecha: '2026-03-25' }
+  { id: 1, parqueoId: 1, usuarioId: 1, estado: 'pendiente', fecha: '2026-03-25', tipo: 'hora', metodo_pago: 'al_llegar', precio_total: 15, codigo_reserva: 'DEMO0001' }
 ];
 let mensajes = [
   { id: 1, deId: 1, paraId: 2, texto: 'Hola, ¿tiene espacio disponible para mañana?', fecha: '2026-03-25T10:00:00', leido: false },
@@ -282,11 +292,17 @@ app.post('/api/parkings', verifyToken, validateParking, async (req, res) => {
   if (req.user.rol !== 'anfitrion' && req.user.rol !== 'admin') {
     return res.status(403).json({ success: false, message: 'Solo anfitriones pueden publicar parqueos' });
   }
-  const { anfitrionId, nombre, tipo, precio, direccion, lat, lng } = req.body;
-  if (!anfitrionId || !nombre || !tipo || precio == null) {
-    return res.status(400).json({ success: false, message: 'Campos requeridos: anfitrionId, nombre, tipo, precio' });
+  const { anfitrionId, nombre, tipo, precio, precio_hora, precio_dia, direccion, lat, lng, capacidad, descripcion } = req.body;
+  if (!anfitrionId || !nombre || !tipo) {
+    return res.status(400).json({ success: false, message: 'Campos requeridos: anfitrionId, nombre, tipo' });
   }
-  const parqueo = await createParkingRecord({ anfitrionId, nombre, tipo, precio, direccion, lat, lng });
+  const parqueo = await createParkingRecord({
+    anfitrionId, nombre, tipo,
+    precio: precio_hora || precio || 15,
+    precio_hora: precio_hora || precio || 15,
+    precio_dia: precio_dia || 120,
+    direccion, lat, lng, capacidad, descripcion
+  });
   res.json({ success: true, parqueo });
 });
 
@@ -308,7 +324,7 @@ app.get('/api/reservations', async (req, res) => {
 });
 
 app.post('/api/reservations', verifyToken, validateReservation, async (req, res) => {
-  const { parqueoId, usuarioId, fecha, fechaInicio, fechaFin } = req.body;
+  const { parqueoId, usuarioId, fecha, fechaInicio, fechaFin, tipo, metodo_pago, precio_total } = req.body;
   if (!parqueoId || !usuarioId) {
     return res.status(400).json({ success: false, message: 'Campos requeridos: parqueoId, usuarioId' });
   }
@@ -318,7 +334,13 @@ app.post('/api/reservations', verifyToken, validateReservation, async (req, res)
   if (conflict) {
     return res.status(409).json({ success: false, message: 'El parqueo ya tiene una reserva en ese horario' });
   }
-  const reserva = await createReservationRecord({ parqueoId, usuarioId, fecha, fechaInicio: inicio, fechaFin: fin });
+  // Generar código de reserva alfanumérico
+  const codigo_reserva = Math.random().toString(36).slice(2, 10).toUpperCase();
+  const reserva = await createReservationRecord({
+    parqueoId, usuarioId, fecha, fechaInicio: inicio, fechaFin: fin,
+    tipo: tipo || 'hora', metodo_pago: metodo_pago || 'al_llegar',
+    precio_total: precio_total || 0, codigo_reserva
+  });
   res.json({ success: true, reserva });
 });
 

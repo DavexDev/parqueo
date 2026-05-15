@@ -3,84 +3,288 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Publicar Parqueo</title>
+  <title>Publicar Parqueo — RDP S.A.</title>
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/leaflet@1.9.4/dist/leaflet.min.css">
   <link rel="stylesheet" href="styles.css">
+  <style>
+    #pickMap { height: 260px; border-radius: 12px; border: 2px solid var(--border,#e5e7eb); cursor: crosshair; }
+    .tipo-check { display: flex; align-items: center; gap: 8px; padding: 10px 14px; border: 1.5px solid #e5e7eb; border-radius: 10px; cursor: pointer; transition: all .15s; }
+    .tipo-check input[type=checkbox] { width: 18px; height: 18px; accent-color: var(--rdp-navy); }
+    .tipo-check:has(input:checked) { border-color: var(--rdp-navy); background: rgba(15,23,42,.05); }
+    .fotos-preview { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 8px; }
+    .foto-thumb { width: 80px; height: 80px; object-fit: cover; border-radius: 8px; }
+    .step-indicator { display: flex; gap: 0; margin-bottom: 1.5rem; }
+    .step { flex: 1; text-align: center; padding: 8px 4px; font-size: .78rem; font-weight: 600; border-bottom: 3px solid #e5e7eb; color: #9ca3af; }
+    .step.active { border-color: var(--rdp-navy); color: var(--rdp-navy); }
+    .step.done { border-color: var(--rdp-gold,#D4AF37); color: var(--rdp-gold,#D4AF37); }
+  </style>
 </head>
 <body>
   <nav class="navbar navbar-dark navbar-parqueo">
     <div class="container-fluid">
-      <a class="navbar-brand text-white fw-bold" href="index.html"><i class="bi bi-p-circle-fill icon-inline"></i>Parqueos</a>
+      <a class="navbar-brand" href="index.html"><div class="navbar-brand-logo">R</div>RDP S.A.</a>
+      <span id="navUser"></span>
     </div>
   </nav>
 
   <div class="page-container">
     <h2 class="section-title"><i class="bi bi-house-add icon-inline"></i>Publicar mi parqueo</h2>
-    <form id="formPublicar" class="card-parqueo p-3">
-      <div class="mb-3">
-        <label class="form-label fw-semibold">Nombre del parqueo</label>
-        <input type="text" class="form-control" id="nombre" placeholder="Ej: Parqueo La Basílica" required>
-      </div>
-      <div class="mb-3">
-        <label class="form-label fw-semibold">Tipo de vehículo</label>
-        <select class="form-select" id="tipo" required>
-          <option value="auto">Auto</option>
-          <option value="moto">Moto</option>
-        </select>
-      </div>
-      <div class="mb-3">
-        <label class="form-label fw-semibold">Precio (Q)</label>
-        <input type="number" class="form-control" id="precio" placeholder="Ej: 25" required>
-      </div>
-      <div class="mb-3">
-        <label class="form-label fw-semibold">Dirección</label>
-        <input type="text" class="form-control" id="direccion" placeholder="Ej: 3a Calle, Zona 1" required>
-      </div>
-      <div class="row g-2 mb-3">
-        <div class="col-6">
-          <label class="form-label fw-semibold">Latitud</label>
-          <input type="number" step="any" class="form-control" id="lat" placeholder="14.56" required>
+
+    <div id="estadoPublicar" class="mb-3"></div>
+
+    <form id="formPublicar">
+      <!-- Información básica -->
+      <div class="card-parqueo p-3 mb-3">
+        <h6 class="fw-bold mb-3" style="color:var(--rdp-navy);"><i class="bi bi-info-circle icon-inline"></i>Información básica</h6>
+        <div class="mb-3">
+          <label class="form-label fw-semibold">Nombre del parqueo *</label>
+          <input type="text" class="form-control" id="nombre" placeholder="Ej: Parqueo La Basílica" required>
         </div>
-        <div class="col-6">
-          <label class="form-label fw-semibold">Longitud</label>
-          <input type="number" step="any" class="form-control" id="lng" placeholder="-89.35" required>
+        <div class="mb-3">
+          <label class="form-label fw-semibold">Descripción</label>
+          <textarea class="form-control" id="descripcion" rows="2" placeholder="Ej: Parqueo techado con vigilancia 24/7..."></textarea>
+        </div>
+        <div class="mb-3">
+          <label class="form-label fw-semibold">Dirección *</label>
+          <input type="text" class="form-control" id="direccion" placeholder="Ej: 3a Calle, Zona 1, Chiquimula" required>
+        </div>
+        <div class="row g-2">
+          <div class="col-6">
+            <label class="form-label fw-semibold">Capacidad (espacios)</label>
+            <input type="number" class="form-control" id="capacidad" placeholder="Ej: 10" min="1">
+          </div>
+          <div class="col-6">
+            <label class="form-label fw-semibold">Nivel de seguridad</label>
+            <select class="form-select" id="nivel_seguridad">
+              <option value="1">1 - Básico</option>
+              <option value="2">2 - Regular</option>
+              <option value="3" selected>3 - Bueno</option>
+              <option value="4">4 - Muy bueno</option>
+              <option value="5">5 - Excelente</option>
+            </select>
+          </div>
         </div>
       </div>
-      <button type="submit" class="btn-accent"><i class="bi bi-send-check icon-inline"></i>Publicar parqueo</button>
+
+      <!-- Tipos de vehículo -->
+      <div class="card-parqueo p-3 mb-3">
+        <h6 class="fw-bold mb-3" style="color:var(--rdp-navy);"><i class="bi bi-car-front icon-inline"></i>Tipos de vehículo aceptados *</h6>
+        <div class="d-grid gap-2" style="grid-template-columns:1fr 1fr;">
+          <label class="tipo-check"><input type="checkbox" name="tipos" value="Moto"><i class="bi bi-bicycle fs-5"></i>Moto</label>
+          <label class="tipo-check"><input type="checkbox" name="tipos" value="Carro"><i class="bi bi-car-front-fill fs-5"></i>Carro</label>
+          <label class="tipo-check"><input type="checkbox" name="tipos" value="Pickup"><i class="bi bi-truck fs-5"></i>Pickup</label>
+          <label class="tipo-check"><input type="checkbox" name="tipos" value="Microbus"><i class="bi bi-bus-front-fill fs-5"></i>Microbús</label>
+          <label class="tipo-check"><input type="checkbox" name="tipos" value="Camioneta"><i class="bi bi-truck-flatbed fs-5"></i>Camioneta</label>
+          <label class="tipo-check"><input type="checkbox" name="tipos" value="Bicicleta"><i class="bi bi-bicycle fs-5"></i>Bicicleta</label>
+        </div>
+      </div>
+
+      <!-- Precios -->
+      <div class="card-parqueo p-3 mb-3">
+        <h6 class="fw-bold mb-3" style="color:var(--rdp-navy);"><i class="bi bi-cash icon-inline"></i>Tarifas</h6>
+        <div class="row g-2">
+          <div class="col-6">
+            <label class="form-label fw-semibold">Precio por hora (Q)</label>
+            <div class="input-group">
+              <span class="input-group-text">Q</span>
+              <input type="number" class="form-control" id="precio_hora" placeholder="15" min="1" step="0.50" value="15">
+            </div>
+            <small class="text-muted">Recomendado: Q15</small>
+          </div>
+          <div class="col-6">
+            <label class="form-label fw-semibold">Precio por día (Q)</label>
+            <div class="input-group">
+              <span class="input-group-text">Q</span>
+              <input type="number" class="form-control" id="precio_dia" placeholder="120" min="1" step="1" value="120">
+            </div>
+            <small class="text-muted">Recomendado: Q120</small>
+          </div>
+        </div>
+        <div class="mt-2">
+          <label class="form-label fw-semibold">Reglas y notas</label>
+          <textarea class="form-control" id="reglas" rows="2" placeholder="Ej: No se aceptan vehículos de carga, reserva mínima 1 hora..."></textarea>
+        </div>
+      </div>
+
+      <!-- Ubicación -->
+      <div class="card-parqueo p-3 mb-3">
+        <h6 class="fw-bold mb-3" style="color:var(--rdp-navy);"><i class="bi bi-geo-alt icon-inline"></i>Ubicación</h6>
+        <p class="text-muted" style="font-size:.85rem;"><i class="bi bi-info-circle icon-inline"></i>Toca el mapa para fijar la ubicación exacta del parqueo.</p>
+        <div id="pickMap" class="mb-2"></div>
+        <div class="row g-2">
+          <div class="col-6">
+            <input type="number" step="any" class="form-control" id="lat" placeholder="Latitud" readonly required>
+          </div>
+          <div class="col-6">
+            <input type="number" step="any" class="form-control" id="lng" placeholder="Longitud" readonly required>
+          </div>
+        </div>
+        <button type="button" class="btn-ghost mt-2" style="width:100%;font-size:.85rem;" onclick="usarUbicacionActual()"><i class="bi bi-crosshair icon-inline"></i>Usar mi ubicación actual</button>
+      </div>
+
+      <!-- Fotos -->
+      <div class="card-parqueo p-3 mb-3">
+        <h6 class="fw-bold mb-3" style="color:var(--rdp-navy);"><i class="bi bi-images icon-inline"></i>Fotos del parqueo</h6>
+        <label class="form-label">Sube fotos (máximo 5, la primera será la principal)</label>
+        <input type="file" class="form-control" id="fotos" accept="image/*" multiple>
+        <div class="fotos-preview" id="fotosPreview"></div>
+      </div>
+
+      <button type="submit" class="btn-accent" id="btnPublicar" style="width:100%;padding:1rem;font-size:1rem;">
+        <i class="bi bi-send-check icon-inline"></i>Publicar parqueo
+      </button>
     </form>
-    <div id="estadoPublicar" class="mt-3"></div>
   </div>
 
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/leaflet@1.9.4/dist/leaflet.min.js"></script>
+  <script src="lib/supabase-client.js"></script>
   <script src="app.js"></script>
   <script>
-    const user = requireLogin(['anfitrion']);
-    if (!user) throw new Error('No session');
-    document.addEventListener('DOMContentLoaded', () => { renderNavbar(); renderBottomBar('publish'); });
-    document.getElementById('formPublicar').addEventListener('submit', function(e) {
-      e.preventDefault();
-      const data = {
-        anfitrionId: user.id,
-        nombre: document.getElementById('nombre').value,
-        tipo: document.getElementById('tipo').value,
-        precio: Number(document.getElementById('precio').value),
-        direccion: document.getElementById('direccion').value,
-        lat: Number(document.getElementById('lat').value),
-        lng: Number(document.getElementById('lng').value)
-      };
-      fetch('/api/parkings', {
-        method: 'POST',
-        headers: getHeaders(),
-        body: JSON.stringify(data)
-      })
-      .then(r => r.json())
-      .then(resp => {
-        if (resp.success) {
-          document.getElementById('estadoPublicar').innerHTML = `<div class='alert alert-success alert-parqueo'><i class="bi bi-check-circle-fill icon-inline"></i>Parqueo publicado correctamente</div>`;
-        } else {
-          document.getElementById('estadoPublicar').innerHTML = `<div class='alert alert-danger alert-parqueo'>Error al publicar</div>`;
-        }
+    const user = requireLogin(['anfitrion','admin']);
+    let pickMap = null, pickMarker = null;
+
+    document.addEventListener('DOMContentLoaded', () => {
+      renderNavbar();
+      renderBottomBar('publish');
+      initPickMap();
+
+      // Preview de fotos
+      document.getElementById('fotos').addEventListener('change', function() {
+        const preview = document.getElementById('fotosPreview');
+        preview.innerHTML = '';
+        const files = Array.from(this.files).slice(0, 5);
+        files.forEach(f => {
+          const img = document.createElement('img');
+          img.className = 'foto-thumb';
+          img.src = URL.createObjectURL(f);
+          preview.appendChild(img);
+        });
       });
     });
+
+    function initPickMap() {
+      const center = [14.566, -89.355];
+      pickMap = L.map('pickMap').setView(center, 14);
+      L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', { attribution:'© OpenStreetMap', maxZoom:19 }).addTo(pickMap);
+      pickMap.on('click', function(e) {
+        const { lat, lng } = e.latlng;
+        setCoords(lat, lng);
+      });
+      setTimeout(() => pickMap.invalidateSize(), 200);
+    }
+
+    function setCoords(lat, lng) {
+      document.getElementById('lat').value = lat.toFixed(7);
+      document.getElementById('lng').value = lng.toFixed(7);
+      if (pickMarker) pickMap.removeLayer(pickMarker);
+      pickMarker = L.marker([lat, lng]).addTo(pickMap).bindPopup('🖊 Ubicación del parqueo').openPopup();
+    }
+
+    function usarUbicacionActual() {
+      if (!navigator.geolocation) return showEstado('Geolocalización no disponible', 'danger');
+      navigator.geolocation.getCurrentPosition(pos => {
+        const { latitude: lat, longitude: lng } = pos.coords;
+        pickMap.setView([lat, lng], 17);
+        setCoords(lat, lng);
+      }, () => showEstado('No se pudo obtener tu ubicación', 'danger'));
+    }
+
+    document.getElementById('formPublicar').addEventListener('submit', async function(e) {
+      e.preventDefault();
+
+      const tipos = Array.from(document.querySelectorAll('input[name="tipos"]:checked')).map(c => c.value);
+      if (tipos.length === 0) { showEstado('Selecciona al menos un tipo de vehículo', 'danger'); return; }
+
+      const lat = parseFloat(document.getElementById('lat').value);
+      const lng = parseFloat(document.getElementById('lng').value);
+      if (!lat || !lng) { showEstado('Selecciona la ubicación en el mapa', 'danger'); return; }
+
+      const btn = document.getElementById('btnPublicar');
+      btn.disabled = true;
+      btn.innerHTML = '<span class="spinner-border spinner-border-sm"></span> Publicando...';
+
+      const parkingData = {
+        anfitrion_id: user.id,
+        nombre: document.getElementById('nombre').value.trim(),
+        descripcion: document.getElementById('descripcion').value.trim() || null,
+        direccion: document.getElementById('direccion').value.trim(),
+        lat,
+        lng,
+        precio_hora: parseFloat(document.getElementById('precio_hora').value) || 15,
+        precio_dia: parseFloat(document.getElementById('precio_dia').value) || 120,
+        capacidad: parseInt(document.getElementById('capacidad').value) || null,
+        nivel_seguridad: parseInt(document.getElementById('nivel_seguridad').value) || 3,
+        reglas: document.getElementById('reglas').value.trim() || null,
+        estado: 'activo'
+      };
+
+      try {
+        let parkingId;
+
+        if (window.rdpSupabase && window.rdpSupabase.isConfigured) {
+          // Crear parqueo en Supabase
+          const { data, error } = await window.rdpSupabase.createParking(parkingData);
+          if (error) throw new Error(error.message);
+          parkingId = data.id;
+
+          // Asociar tipos de vehículo
+          // Primero obtenemos los IDs de los tipos
+          const { data: vtData } = await window.rdpSupabase.getVehicleTypes();
+          if (vtData && vtData.length > 0) {
+            const vtIds = vtData.filter(vt => tipos.includes(vt.nombre)).map(vt => vt.id);
+            if (vtIds.length > 0) await window.rdpSupabase.addParkingVehicleTypes(parkingId, vtIds);
+          }
+
+          // Subir fotos
+          const fotosInput = document.getElementById('fotos');
+          if (fotosInput.files.length > 0) {
+            const archivos = Array.from(fotosInput.files).slice(0, 5);
+            for (let i = 0; i < archivos.length; i++) {
+              await window.rdpSupabase.uploadParkingPhoto(parkingId, archivos[i], i, i === 0);
+            }
+          }
+        } else {
+          // Fallback Express API
+          const resp = await fetch('/api/parkings', {
+            method: 'POST',
+            headers: getHeaders(),
+            body: JSON.stringify({
+              anfitrionId: user.id,
+              nombre: parkingData.nombre,
+              tipo: tipos[0],
+              precio: parkingData.precio_hora,
+              precio_hora: parkingData.precio_hora,
+              precio_dia: parkingData.precio_dia,
+              direccion: parkingData.direccion,
+              lat, lng,
+              capacidad: parkingData.capacidad,
+              descripcion: parkingData.descripcion
+            })
+          });
+          const data = await resp.json();
+          if (!data.success) throw new Error(data.error || 'Error al publicar');
+          parkingId = data.parqueo?.id;
+        }
+
+        showEstado('<i class="bi bi-check-circle-fill icon-inline"></i>Parqueo publicado correctamente. <a href="parkings.html">Ver parqueos</a>', 'success');
+        document.getElementById('formPublicar').reset();
+        document.getElementById('fotosPreview').innerHTML = '';
+        if (pickMarker) { pickMap.removeLayer(pickMarker); pickMarker = null; }
+      } catch (err) {
+        showEstado('<i class="bi bi-exclamation-triangle icon-inline"></i>' + err.message, 'danger');
+      } finally {
+        btn.disabled = false;
+        btn.innerHTML = '<i class="bi bi-send-check icon-inline"></i>Publicar parqueo';
+      }
+    });
+
+    function showEstado(msg, tipo = 'info') {
+      const el = document.getElementById('estadoPublicar');
+      el.innerHTML = `<div class="alert alert-${tipo} alert-parqueo">${msg}</div>`;
+      el.scrollIntoView({ behavior: 'smooth' });
+    }
   </script>
 </body>
 </html>
