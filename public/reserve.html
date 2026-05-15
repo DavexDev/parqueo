@@ -10,12 +10,12 @@
 <body>
   <nav class="navbar navbar-dark navbar-parqueo">
     <div class="container-fluid">
-      <a class="navbar-brand text-white fw-bold" href="index.html">🅿️ Parqueos</a>
+      <a class="navbar-brand text-white fw-bold" href="index.html"><i class="bi bi-p-circle-fill icon-inline"></i>Parqueos</a>
     </div>
   </nav>
 
   <div class="page-container">
-    <h2 class="section-title">📅 Reservar parqueo</h2>
+    <h2 class="section-title"><i class="bi bi-calendar-check icon-inline"></i>Reservar parqueo</h2>
     <div id="infoParqueo" class="mb-3"></div>
     <div id="mapaParqueo" class="mb-3"></div>
     <form id="formReserva" class="card-parqueo p-3">
@@ -23,7 +23,7 @@
         <label for="fecha" class="form-label">Fecha de visita</label>
         <input type="date" class="form-control" id="fecha" required>
       </div>
-      <button type="submit" class="btn-main">📅 Reservar ahora</button>
+      <button type="submit" class="btn-main"><i class="bi bi-calendar-check icon-inline"></i>Reservar ahora</button>
     </form>
     <div id="estadoReserva" class="mt-3"></div>
   </div>
@@ -45,11 +45,11 @@
           document.getElementById('formReserva').style.display = 'none';
           document.getElementById('mapaParqueo').innerHTML = '';
         } else {
-          const icon = parqueo.tipo === 'moto' ? '🏍️' : '🚗';
+          const icon = parqueo.tipo === 'moto' ? 'bi-bicycle' : 'bi-car-front-fill';
           document.getElementById('infoParqueo').innerHTML = `
             <div class="card-parqueo p-3">
               <div class="d-flex align-items-center gap-3 mb-2">
-                <div class="parking-icon">${icon}</div>
+                <div class="parking-icon"><i class="bi ${icon}"></i></div>
                 <div>
                   <h5 class="fw-bold mb-0">${parqueo.nombre}</h5>
                   <small class="text-muted">${parqueo.direccion}</small>
@@ -59,7 +59,7 @@
                 <span class="badge-tipo">${parqueo.tipo}</span>
                 <span class="badge-precio">Q${parqueo.precio}</span>
               </div>
-              <a href="https://maps.google.com/?q=${parqueo.lat},${parqueo.lng}" target="_blank" rel="noopener" class="btn-ghost" style="padding:0.5rem;font-size:0.9rem;">📍 Abrir en Google Maps</a>
+              <a href="https://maps.google.com/?q=${parqueo.lat},${parqueo.lng}" target="_blank" rel="noopener" class="btn-ghost" style="padding:0.5rem;font-size:0.9rem;"><i class="bi bi-geo-alt icon-inline"></i>Abrir en Google Maps</a>
             </div>
           `;
           document.getElementById('mapaParqueo').innerHTML = `
@@ -75,13 +75,13 @@
       const fecha = document.getElementById('fecha').value;
       fetch('/api/reservations', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: getHeaders(),
         body: JSON.stringify({ parqueoId: Number(parqueoId), usuarioId: user.id, fecha })
       })
       .then(r => r.json())
       .then(resp => {
         if (resp.success) {
-          document.getElementById('estadoReserva').innerHTML = `<div class='alert alert-success alert-parqueo'>✅ Reserva creada. Estado: <b>${resp.reserva.estado}</b></div>`;
+          document.getElementById('estadoReserva').innerHTML = `<div class='alert alert-success alert-parqueo'><i class="bi bi-check-circle-fill icon-inline"></i>Reserva creada. Estado: <b>${resp.reserva.estado}</b></div>`;
         } else {
           document.getElementById('estadoReserva').innerHTML = `<div class='alert alert-danger alert-parqueo'>Error al reservar</div>`;
         }

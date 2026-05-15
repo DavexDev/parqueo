@@ -1,0 +1,256 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Mis Reservas - Parqueos</title>
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css">
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <nav class="navbar navbar-dark navbar-parqueo">
+    <div class="container-fluid">
+      <a class="navbar-brand text-white fw-bold" href="index.html"><i class="bi bi-calendar-check-fill icon-inline"></i>Mis Reservas</a>
+    </div>
+  </nav>
+
+  <div class="page-container">
+    <div style="max-width:800px;margin:0 auto;">
+      <div style="padding:2rem 0;">
+        <h2 style="font-size:1.75rem;font-weight:700;margin-bottom:0.5rem;">Mis Reservas</h2>
+        <p style="color:var(--text-muted);">Historial de tus parqueos reservados</p>
+      </div>
+
+      <div class="mb-4">
+        <div class="btn-group btn-group-sm mb-3" role="group">
+          <button type="button" class="btn btn-outline-primary" data-filter="todas">Todas</button>
+          <button type="button" class="btn btn-outline-primary" data-filter="pendiente">Pendientes</button>
+          <button type="button" class="btn btn-outline-primary" data-filter="confirmada">Confirmadas</button>
+          <button type="button" class="btn btn-outline-primary" data-filter="finalizada">Finalizadas</button>
+          <button type="button" class="btn btn-outline-primary" data-filter="cancelada">Canceladas</button>
+        </div>
+      </div>
+
+      <div id="listaReservas">
+        <div class="text-center text-muted py-5">
+          <i class="bi bi-hourglass-split" style="font-size:2.5rem;margin-bottom:1rem;display:block;"></i>
+          Cargando tus reservas...
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script src="app.js"></script>
+  <script>
+    let todasReservas = [];
+    let filtroActual = 'todas';
+
+    document.addEventListener('DOMContentLoaded', () => {
+      const user = requireLogin(['visitante']);
+      if (!user) return;
+
+      renderNavbar();
+      renderBottomBar('reservas');
+
+      cargarReservas();
+
+      // Event listeners para filtros
+      document.querySelectorAll('[data-filter]').forEach(btn => {
+        btn.addEventListener('click', (e) => {
+          document.querySelectorAll('[data-filter]').forEach(b => b.classList.remove('active'));
+          e.target.classList.add('active');
+          filtroActual = e.target.dataset.filter;
+          renderReservas();
+        });
+      });
+
+      // Activar primer botón
+      document.querySelector('[data-filter="todas"]').classList.add('active');
+    });
+
+    function cargarReservas() {
+      const user = getUser();
+      fetch(`/api/reservations?usuarioId=${user.id}`, { headers: getHeaders() })
+        .then(r => r.json())
+        .then(reservas => {
+          todasReservas = reservas || [];
+          renderReservas();
+        })
+        .catch(e => {
+          console.error('Error cargando reservas:', e);
+          document.getElementById('listaReservas').innerHTML = `
+            <div class="alert alert-danger" style="text-align:center;">
+              <i class="bi bi-exclamation-triangle"></i> Error al cargar tus reservas. Intenta más tarde.
+            </div>
+          `;
+        });
+    }
+
+    function renderReservas() {
+      const cont = document.getElementById('listaReservas');
+      let filtradas = todasReservas;
+
+      if (filtroActual !== 'todas') {
+        filtradas = todasReservas.filter(r => r.estado === filtroActual);
+      }
+
+      if (filtradas.length === 0) {
+        cont.innerHTML = `
+          <div style="text-align:center;padding:2rem;">
+            <i class="bi bi-inbox" style="font-size:2.5rem;color:var(--text-muted);margin-bottom:1rem;display:block;"></i>
+            <p style="color:var(--text-muted);">No tienes reservas en esta categoría</p>
+            <a href="parkings.html" class="btn btn-primary btn-sm">Buscar parqueos</a>
+          </div>
+        `;
+        return;
+      }
+
+      cont.innerHTML = filtradas.map(r => {
+        const estadoClase = {
+          'pendiente': 'warning',
+          'confirmada': 'success',
+          'finalizada': 'secondary',
+          'cancelada': 'danger'
+        }[r.estado] || 'light';
+
+        const badgeEstado = {
+          'pendiente': '⏳ Pendiente',
+          'confirmada': '✓ Confirmada',
+          'finalizada': '✓ Finalizada',
+          'cancelada': '✗ Cancelada'
+        }[r.estado] || r.estado;
+
+        const fecha = r.fechaInicio ? new Date(r.fechaInicio).toLocaleDateString('es-GT') : 'Sin fecha';
+        const fechaFin = r.fechaFin ? new Date(r.fechaFin).toLocaleDateString('es-GT') : '';
+        const rango = fechaFin ? `${fecha} a ${fechaFin}` : fecha;
+
+        return `
+          <div style="
+            background:var(--card-bg);
+            border-left:4px solid var(--primary);
+            border-radius:12px;
+            padding:1.5rem;
+            margin-bottom:1rem;
+            transition:all var(--transition);
+          " class="reserva-card">
+            <div style="display:flex;justify-content:space-between;align-items:start;margin-bottom:1rem;">
+              <div>
+                <h3 style="font-size:1.1rem;font-weight:700;margin:0;margin-bottom:0.25rem;">
+                  <i class="bi bi-p-circle-fill icon-inline"></i>${r.parqueoNombre || 'Parqueo'}
+                </h3>
+                <p style="color:var(--text-muted);font-size:0.9rem;margin:0;">
+                  Anfitrión: <strong>${r.anfitrionNombre || 'Sin especificar'}</strong>
+                </p>
+              </div>
+              <span style="
+                background:${estadoClase === 'success' ? '#c8e6c9' : estadoClase === 'warning' ? '#fff9c4' : estadoClase === 'danger' ? '#ffcdd2' : '#e0e0e0'};
+                color:${estadoClase === 'success' ? '#1b5e20' : estadoClase === 'warning' ? '#f57f17' : estadoClase === 'danger' ? '#b71c1c' : '#424242'};
+                padding:0.5rem 1rem;
+                border-radius:20px;
+                font-size:0.85rem;
+                font-weight:600;
+              ">${badgeEstado}</span>
+            </div>
+
+            <div style="
+              background:rgba(0,0,0,0.02);
+              padding:1rem;
+              border-radius:8px;
+              margin-bottom:1rem;
+              display:grid;
+              grid-template-columns:1fr 1fr;
+              gap:1rem;
+            ">
+              <div>
+                <p style="font-size:0.8rem;color:var(--text-muted);margin:0 0 0.25rem 0;">Fechas</p>
+                <p style="font-weight:700;margin:0;">${rango}</p>
+              </div>
+              <div>
+                <p style="font-size:0.8rem;color:var(--text-muted);margin:0 0 0.25rem 0;">Precio</p>
+                <p style="font-weight:700;margin:0;color:var(--primary);">Q${r.precio || 'N/A'}</p>
+              </div>
+            </div>
+
+            <div style="display:flex;gap:0.5rem;">
+              <button class="btn btn-outline-primary btn-sm" onclick="verDetalles(${r.id})">
+                <i class="bi bi-eye"></i> Detalles
+              </button>
+              ${r.estado === 'pendiente' ? `
+                <button class="btn btn-outline-danger btn-sm" onclick="cancelarReserva(${r.id})">
+                  <i class="bi bi-x-circle"></i> Cancelar
+                </button>
+              ` : ''}
+              ${r.estado === 'confirmada' || r.estado === 'pendiente' ? `
+                <button class="btn btn-outline-info btn-sm" onclick="contactarAnfitrion('${r.anfitrionNombre}', ${r.anfitrionId})">
+                  <i class="bi bi-chat-dots"></i> Contactar
+                </button>
+              ` : ''}
+            </div>
+          </div>
+        `;
+      }).join('');
+    }
+
+    function verDetalles(reservaId) {
+      const reserva = todasReservas.find(r => r.id === reservaId);
+      if (!reserva) return;
+
+      const modal = `
+        <div class="modal fade" tabindex="-1">
+          <div class="modal-dialog">
+            <div class="modal-content">
+              <div class="modal-header">
+                <h5 class="modal-title">Detalles de Reserva #${reserva.id}</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+              </div>
+              <div class="modal-body">
+                <p><strong>Parqueo:</strong> ${reserva.parqueoNombre}</p>
+                <p><strong>Anfitrión:</strong> ${reserva.anfitrionNombre}</p>
+                <p><strong>Fecha de inicio:</strong> ${new Date(reserva.fechaInicio).toLocaleString('es-GT')}</p>
+                <p><strong>Fecha de fin:</strong> ${new Date(reserva.fechaFin).toLocaleString('es-GT')}</p>
+                <p><strong>Estado:</strong> <span class="badge-estado ${reserva.estado}">${reserva.estado}</span></p>
+                <p><strong>Monto:</strong> Q${reserva.precio}</p>
+              </div>
+              <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cerrar</button>
+              </div>
+            </div>
+          </div>
+        </div>
+      `;
+
+      const modalEl = document.createElement('div');
+      modalEl.innerHTML = modal;
+      document.body.appendChild(modalEl);
+      const m = new bootstrap.Modal(modalEl.querySelector('.modal'));
+      m.show();
+      modalEl.addEventListener('hidden.bs.modal', () => modalEl.remove());
+    }
+
+    function cancelarReserva(reservaId) {
+      if (!confirm('¿Estás seguro? Esta acción no se puede deshacer.')) return;
+
+      fetch(`/api/reservations/${reservaId}`, {
+        method: 'PUT',
+        headers: getHeaders(),
+        body: JSON.stringify({ estado: 'cancelada' })
+      })
+        .then(r => r.json())
+        .then(resp => {
+          if (resp.success) {
+            alert('Reserva cancelada');
+            cargarReservas();
+          } else {
+            alert('Error al cancelar: ' + (resp.message || 'Intenta más tarde'));
+          }
+        })
+        .catch(e => alert('Error: ' + e));
+    }
+
+    function contactarAnfitrion(nombre, anfitrionId) {
+      // Redirigir a messages.html con el anfitrión preseleccionado
+      window.location.href = `messages.html?contact=${anfitrionId}`;
+    }
+  </script>
+</body>
+</html>

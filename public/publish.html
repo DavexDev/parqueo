@@ -10,12 +10,12 @@
 <body>
   <nav class="navbar navbar-dark navbar-parqueo">
     <div class="container-fluid">
-      <a class="navbar-brand text-white fw-bold" href="index.html">🅿️ Parqueos</a>
+      <a class="navbar-brand text-white fw-bold" href="index.html"><i class="bi bi-p-circle-fill icon-inline"></i>Parqueos</a>
     </div>
   </nav>
 
   <div class="page-container">
-    <h2 class="section-title">🏠 Publicar mi parqueo</h2>
+    <h2 class="section-title"><i class="bi bi-house-add icon-inline"></i>Publicar mi parqueo</h2>
     <form id="formPublicar" class="card-parqueo p-3">
       <div class="mb-3">
         <label class="form-label fw-semibold">Nombre del parqueo</label>
@@ -24,8 +24,8 @@
       <div class="mb-3">
         <label class="form-label fw-semibold">Tipo de vehículo</label>
         <select class="form-select" id="tipo" required>
-          <option value="auto">🚗 Auto</option>
-          <option value="moto">🏍️ Moto</option>
+          <option value="auto">Auto</option>
+          <option value="moto">Moto</option>
         </select>
       </div>
       <div class="mb-3">
@@ -46,7 +46,7 @@
           <input type="number" step="any" class="form-control" id="lng" placeholder="-89.35" required>
         </div>
       </div>
-      <button type="submit" class="btn-accent">🚀 Publicar parqueo</button>
+      <button type="submit" class="btn-accent"><i class="bi bi-send-check icon-inline"></i>Publicar parqueo</button>
     </form>
     <div id="estadoPublicar" class="mt-3"></div>
   </div>
@@ -69,13 +69,13 @@
       };
       fetch('/api/parkings', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: getHeaders(),
         body: JSON.stringify(data)
       })
       .then(r => r.json())
       .then(resp => {
         if (resp.success) {
-          document.getElementById('estadoPublicar').innerHTML = `<div class='alert alert-success alert-parqueo'>✅ Parqueo publicado correctamente</div>`;
+          document.getElementById('estadoPublicar').innerHTML = `<div class='alert alert-success alert-parqueo'><i class="bi bi-check-circle-fill icon-inline"></i>Parqueo publicado correctamente</div>`;
         } else {
           document.getElementById('estadoPublicar').innerHTML = `<div class='alert alert-danger alert-parqueo'>Error al publicar</div>`;
         }

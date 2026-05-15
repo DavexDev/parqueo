@@ -1,0 +1,339 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Tutorial - Parqueos Esquipulas</title>
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
+  <link rel="stylesheet" href="styles.css">
+  <style>
+    .tutorial-container { max-width: 600px; margin: 2rem auto; }
+    .tutorial-card { background: linear-gradient(135deg, var(--primary) 0%, #0056b3 100%); color: white; border-radius: 16px; padding: 2.5rem 1.5rem; margin-bottom: 1.5rem; text-align: center; box-shadow: var(--shadow-lg); }
+    .tutorial-card h1 { font-size: 2rem; margin-bottom: 0.5rem; }
+    .tutorial-card .icon-big { font-size: 4rem; margin-bottom: 1rem; }
+    .tutorial-steps { display: flex; flex-direction: column; gap: 1rem; }
+    .tutorial-step { background: var(--card-bg); border-left: 4px solid var(--primary); padding: 1.5rem; border-radius: 8px; cursor: pointer; transition: all var(--transition); }
+    .tutorial-step:hover { box-shadow: var(--shadow-lg); transform: translateX(5px); }
+    .tutorial-step .step-number { display: inline-block; background: var(--primary); color: white; border-radius: 50%; width: 40px; height: 40px; line-height: 40px; text-align: center; font-weight: 700; margin-right: 1rem; }
+    .tutorial-step h3 { margin: 0; font-size: 1.1rem; font-weight: 700; }
+    .tutorial-step p { margin: 0.5rem 0 0 0; color: var(--text-muted); font-size: 0.9rem; }
+    .modal-full-screen { max-width: 90vw; }
+    .modal-step-image { max-width: 100%; height: auto; margin-bottom: 1rem; border-radius: 12px; }
+    .tutorial-badge { display: inline-block; background: #ffd700; color: #333; padding: 0.5rem 1rem; border-radius: 20px; font-weight: 700; font-size: 0.9rem; margin-bottom: 1rem; }
+  </style>
+</head>
+<body>
+  <nav class="navbar navbar-dark navbar-parqueo">
+    <div class="container-fluid">
+      <a class="navbar-brand text-white fw-bold" href="index.html"><i class="bi bi-book-fill icon-inline"></i>Tutorial</a>
+      <a href="index.html" class="btn btn-outline-light btn-sm">← Volver</a>
+    </div>
+  </nav>
+
+  <div class="page-container">
+    <div class="tutorial-container">
+      <div class="tutorial-card">
+        <div class="icon-big"><i class="bi bi-question-circle-fill"></i></div>
+        <h1>¿Cómo usar Parqueos?</h1>
+        <p>Aprende a buscar, reservar y publicar parqueos</p>
+      </div>
+
+      <div class="tutorial-steps" id="tutorialSteps">
+        <!-- Visitante -->
+        <div class="tutorial-step" onclick="openModal('visitante')">
+          <span class="step-number"><i class="bi bi-person-walking"></i></span>
+          <h3>Para Visitantes</h3>
+          <p>Busca y reserva parqueos disponibles</p>
+        </div>
+
+        <!-- Anfitrión -->
+        <div class="tutorial-step" onclick="openModal('anfitrion')">
+          <span class="step-number"><i class="bi bi-house-door"></i></span>
+          <h3>Para Anfitriones</h3>
+          <p>Publica tus espacios y gestiona reservas</p>
+        </div>
+
+        <!-- Mensajes -->
+        <div class="tutorial-step" onclick="openModal('mensajes')">
+          <span class="step-number"><i class="bi bi-chat-dots"></i></span>
+          <h3>Sistema de Mensajes</h3>
+          <p>Comunícate con visitantes o anfitriones</p>
+        </div>
+
+        <!-- Mapa -->
+        <div class="tutorial-step" onclick="openModal('mapa')">
+          <span class="step-number"><i class="bi bi-map"></i></span>
+          <h3>Buscar por Ubicación</h3>
+          <p>Usa el mapa para encontrar parqueos cerca</p>
+        </div>
+
+        <!-- Admin -->
+        <div class="tutorial-step" onclick="openModal('admin')">
+          <span class="step-number"><i class="bi bi-gear"></i></span>
+          <h3>Panel de Administrador</h3>
+          <p>Gestiona usuarios, parqueos y reservas</p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- MODAL: Visitantes -->
+  <div class="modal fade" id="modalVisitante" tabindex="-1">
+    <div class="modal-dialog modal-dialog-centered modal-full-screen">
+      <div class="modal-content">
+        <div class="modal-header bg-primary text-white">
+          <h5 class="modal-title"><i class="bi bi-person-walking icon-inline"></i>Guía para Visitantes</h5>
+          <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+        </div>
+        <div class="modal-body">
+          <span class="tutorial-badge">4 pasos</span>
+          
+          <h6 class="mt-3 fw-bold"><i class="bi bi-1-circle-fill"></i> Inicia sesión o regístrate</h6>
+          <p>Ve a <strong>Entrar</strong> → Selecciona <strong>Visitante</strong> → Ingresa tu nombre, email y crea tu cuenta</p>
+          
+          <h6 class="mt-3 fw-bold"><i class="bi bi-2-circle-fill"></i> Busca parqueos</h6>
+          <p>En la pestaña <strong>Buscar</strong>, filtra por:</p>
+          <ul class="small">
+            <li><strong>Tipo:</strong> Auto, Moto o Bicicleta</li>
+            <li><strong>Precio máximo:</strong> Usa el slider</li>
+            <li><strong>Radio de búsqueda:</strong> ¿Qué tan lejos quieres buscar?</li>
+          </ul>
+          
+          <h6 class="mt-3 fw-bold"><i class="bi bi-3-circle-fill"></i> Usa el mapa</h6>
+          <p>Haz clic en <i class="bi bi-map"></i> <strong>Ver Mapa</strong> para visualizar parqueos cercanos. Tu ubicación aparece como un círculo azul.</p>
+          
+          <h6 class="mt-3 fw-bold"><i class="bi bi-4-circle-fill"></i> Haz una reserva</h6>
+          <p>Selecciona un parqueo → Haz clic en <strong>Reservar</strong> → Elige las fechas → Confirma. El anfitrión recibirá una notificación.</p>
+          
+          <div class="alert alert-info mt-3">
+            <i class="bi bi-lightbulb"></i> <strong>Consejo:</strong> Comunícate con el anfitrión antes de reservar usando la sección <strong>Mensajes</strong> para aclarar detalles como horarios de entrada.
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-primary" data-bs-dismiss="modal">Entendido</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- MODAL: Anfitriones -->
+  <div class="modal fade" id="modalAnfitrion" tabindex="-1">
+    <div class="modal-dialog modal-dialog-centered modal-full-screen">
+      <div class="modal-content">
+        <div class="modal-header bg-success text-white">
+          <h5 class="modal-title"><i class="bi bi-house-door icon-inline"></i>Guía para Anfitriones</h5>
+          <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+        </div>
+        <div class="modal-body">
+          <span class="tutorial-badge">5 pasos</span>
+          
+          <h6 class="mt-3 fw-bold"><i class="bi bi-1-circle-fill"></i> Regístrate como Anfitrión</h6>
+          <p>Ve a <strong>Entrar</strong> → Elige <strong>Anfitrión</strong> → Ingresa tus datos. ¡Tu cuenta está lista para publicar!</p>
+          
+          <h6 class="mt-3 fw-bold"><i class="bi bi-2-circle-fill"></i> Publica tu primer parqueo</h6>
+          <p>En la pestaña <strong>Publicar</strong>, completa:</p>
+          <ul class="small">
+            <li><strong>Nombre:</strong> Ej: "Parqueo Céntrico, cerca Basílica"</li>
+            <li><strong>Tipo:</strong> Auto, Moto, Bicicleta o Ambos</li>
+            <li><strong>Precio:</strong> Tarifa por día (en Quetzales)</li>
+            <li><strong>Ubicación:</strong> Dirección exacta y coordenadas GPS</li>
+            <li><strong>Disponibilidad:</strong> Tu parqueo aparece inmediatamente en las búsquedas</li>
+          </ul>
+          
+          <h6 class="mt-3 fw-bold"><i class="bi bi-3-circle-fill"></i> Recibe mensajes</h6>
+          <p>Los visitantes te contactarán en la sección <strong>Mensajes</strong>. Responde rápido para aumentar tus probabilidades de reserva.</p>
+          
+          <h6 class="mt-3 fw-bold"><i class="bi bi-4-circle-fill"></i> Confirma reservas</h6>
+          <p>Cuando un visitante reserve:</p>
+          <ul class="small">
+            <li>Recibirás una notificación</li>
+            <li>Confirma la reserva o cámbiala a "Finalizada"</li>
+            <li>El visitante verá el estado en <strong>Mis Reservas</strong></li>
+          </ul>
+          
+          <h6 class="mt-3 fw-bold"><i class="bi bi-5-circle-fill"></i> Gestiona tu calendario</h6>
+          <p>Tu parqueo está disponible siempre. Las fechas reservadas aparecerán marcadas (próximamente). Evita conflictos confirmando a tiempo.</p>
+          
+          <div class="alert alert-success mt-3">
+            <i class="bi bi-cash-coin"></i> <strong>Ganancias:</strong> Cada reserva confirmada genera ingresos. Tu saldo se muestra en el dashboard.
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-success" data-bs-dismiss="modal">Entendido</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- MODAL: Mensajes -->
+  <div class="modal fade" id="modalMensajes" tabindex="-1">
+    <div class="modal-dialog modal-dialog-centered modal-full-screen">
+      <div class="modal-content">
+        <div class="modal-header bg-info text-white">
+          <h5 class="modal-title"><i class="bi bi-chat-dots icon-inline"></i>Sistema de Mensajes</h5>
+          <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+        </div>
+        <div class="modal-body">
+          <h6 class="fw-bold"><i class="bi bi-chat-bubble"></i> ¿Cómo funciona?</h6>
+          <p>La plataforma permite comunicación directa entre visitantes y anfitriones:</p>
+          
+          <ul>
+            <li><strong>Visitantes:</strong> Pueden iniciar conversaciones con anfitriones de parqueos que les interesan</li>
+            <li><strong>Anfitriones:</strong> Reciben mensajes de visitantes potenciales</li>
+            <li><strong>Privado:</strong> Cada conversación es 1-a-1 (no hay grupos)</li>
+          </ul>
+          
+          <h6 class="mt-3 fw-bold"><i class="bi bi-send"></i> Cómo enviar un mensaje</h6>
+          <ol class="small">
+            <li>Ve a la sección <strong>Mensajes</strong></li>
+            <li>Si es la primera vez, selecciona a quién escribir</li>
+            <li>Escribe tu mensaje (máximo 1000 caracteres)</li>
+            <li>Presiona <strong>Enviar</strong></li>
+            <li>El receptor verá un badge azul si el mensaje es nuevo</li>
+          </ol>
+          
+          <h6 class="mt-3 fw-bold"><i class="bi bi-check-circle"></i> Estados de mensaje</h6>
+          <ul class="small">
+            <li><i class="bi bi-hourglass-split" style="color:#e65100;"></i> <strong>Pendiente:</strong> Aún no leído</li>
+            <li><i class="bi bi-check-circle-fill" style="color:#2e7d32;"></i> <strong>Leído:</strong> El receptor lo vio</li>
+          </ul>
+          
+          <div class="alert alert-warning mt-3">
+            <i class="bi bi-exclamation-triangle"></i> <strong>Importante:</strong> No compartidas datos sensibles (contraseñas, tarjetas). La plataforma solo es para coordinar reservas.
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-info" data-bs-dismiss="modal">Entendido</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- MODAL: Mapa -->
+  <div class="modal fade" id="modalMapa" tabindex="-1">
+    <div class="modal-dialog modal-dialog-centered modal-full-screen">
+      <div class="modal-content">
+        <div class="modal-header bg-warning text-dark">
+          <h5 class="modal-title"><i class="bi bi-map icon-inline"></i>Búsqueda por Mapa</h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+        </div>
+        <div class="modal-body">
+          <h6 class="fw-bold"><i class="bi bi-geo-alt"></i> ¿Por qué usar el mapa?</h6>
+          <p>El mapa te muestra parqueos disponibles en tu área de forma visual. Perfecto para:</p>
+          <ul class="small">
+            <li>Ver dónde estás exactamente (círculo azul)</li>
+            <li>Identificar parqueos cercanos al instante</li>
+            <li>Filtrar por radio de búsqueda (100m, 500m, 1km, etc.)</li>
+          </ul>
+          
+          <h6 class="mt-3 fw-bold"><i class="bi bi-toggles2"></i> Cómo activar el mapa</h6>
+          <ol class="small">
+            <li>Ve a <strong>Buscar</strong> → <strong>Parqueos</strong></li>
+            <li>Haz clic en <i class="bi bi-map"></i> <strong>Ver Mapa</strong></li>
+            <li>Permite que la app acceda a tu ubicación</li>
+            <li>Verás los parqueos como marcadores en el mapa</li>
+          </ol>
+          
+          <h6 class="mt-3 fw-bold"><i class="bi bi-sliders"></i> Controles del mapa</h6>
+          <ul class="small">
+            <li><strong>Filtros:</strong> Ajusta tipo, precio y radio</li>
+            <li><strong>Zoom:</strong> Amplía/reduce con el scroll o botones</li>
+            <li><strong>Marcadores:</strong> Haz clic en un parqueo para ver detalles</li>
+            <li><strong>Lista:</strong> Vuelve a la vista de lista en cualquier momento</li>
+          </ul>
+          
+          <div class="alert alert-info mt-3">
+            <i class="bi bi-lightbulb"></i> <strong>Tip:</strong> El mapa usa OpenStreetMap (no requiere API key) y es súper rápido, incluso en conexiones lentas.
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-warning" data-bs-dismiss="modal">Entendido</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- MODAL: Admin -->
+  <div class="modal fade" id="modalAdmin" tabindex="-1">
+    <div class="modal-dialog modal-dialog-centered modal-full-screen">
+      <div class="modal-content">
+        <div class="modal-header bg-dark text-white">
+          <h5 class="modal-title"><i class="bi bi-gear icon-inline"></i>Panel de Administrador</h5>
+          <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+        </div>
+        <div class="modal-body">
+          <h6 class="fw-bold"><i class="bi bi-shield-lock"></i> Acceso restringido</h6>
+          <p>Solo usuarios con rol <strong>Admin</strong> pueden acceder. Iniciar sesión como admin@parqueos.com</p>
+          
+          <h6 class="mt-3 fw-bold"><i class="bi bi-speedometer2"></i> Dashboard</h6>
+          <p>Vista general con 4 métricas clave:</p>
+          <ul class="small">
+            <li><i class="bi bi-people-fill"></i> <strong>Usuarios:</strong> Total registrados en el sistema</li>
+            <li><i class="bi bi-p-circle-fill"></i> <strong>Parqueos:</strong> Espacios activos</li>
+            <li><i class="bi bi-calendar-check"></i> <strong>Reservas:</strong> Todas las reservas (activas + históricas)</li>
+            <li><i class="bi bi-chat-dots"></i> <strong>Mensajes:</strong> Volumen de comunicación</li>
+          </ul>
+          
+          <h6 class="mt-3 fw-bold"><i class="bi bi-people"></i> Gestión de Usuarios</h6>
+          <p>Ver lista de todos los usuarios con su rol y email. Opciones:</p>
+          <ul class="small">
+            <li><strong>Eliminar usuario:</strong> Borra la cuenta y sus datos asociados</li>
+            <li><strong>Filtros:</strong> Buscar por nombre o email</li>
+          </ul>
+          
+          <h6 class="mt-3 fw-bold"><i class="bi bi-p-circle-fill"></i> Gestión de Parqueos</h6>
+          <p>Monitorea todos los espacios publicados:</p>
+          <ul class="small">
+            <li>Dirección, tipo y precio de cada parqueo</li>
+            <li>Anfitrión responsable</li>
+            <li>Disponibilidad actual</li>
+            <li>Opción de eliminar (soft delete - no es irreversible)</li>
+          </ul>
+          
+          <h6 class="mt-3 fw-bold"><i class="bi bi-calendar-check"></i> Gestión de Reservas</h6>
+          <p>Control total sobre todas las reservas:</p>
+          <ul class="small">
+            <li>Ver estado (Pendiente, Confirmada, Finalizada, Cancelada)</li>
+            <li>Cambiar estado manualmente si es necesario</li>
+            <li>Enviar notificaciones (por email a usuario y anfitrión)</li>
+          </ul>
+          
+          <h6 class="mt-3 fw-bold"><i class="bi bi-chat-dots"></i> Monitoreo de Mensajes</h6>
+          <p>Supervisa la comunicación entre usuarios:</p>
+          <ul class="small">
+            <li>Ver conversaciones completas</li>
+            <li>Identificar mensajes no leídos</li>
+            <li>Monitorear para abuso o spam</li>
+          </ul>
+          
+          <div class="alert alert-danger mt-3">
+            <i class="bi bi-exclamation-triangle-fill"></i> <strong>Responsabilidad:</strong> Como admin, tienes acceso a datos sensibles. Úsalo responsablemente.
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-dark" data-bs-dismiss="modal">Entendido</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script src="app.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+  <script>
+    function openModal(tipo) {
+      let modalId = '';
+      switch(tipo) {
+        case 'visitante': modalId = 'modalVisitante'; break;
+        case 'anfitrion': modalId = 'modalAnfitrion'; break;
+        case 'mensajes': modalId = 'modalMensajes'; break;
+        case 'mapa': modalId = 'modalMapa'; break;
+        case 'admin': modalId = 'modalAdmin'; break;
+      }
+      if (modalId) {
+        new bootstrap.Modal(document.getElementById(modalId)).show();
+      }
+    }
+  </script>
+</body>
+</html>

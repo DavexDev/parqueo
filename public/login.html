@@ -3,56 +3,69 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Iniciar sesión / Registrarse</title>
+  <title>Acceder — RDP S.A.</title>
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css">
   <link rel="stylesheet" href="styles.css">
+  <meta name="theme-color" content="#0F172A">
 </head>
 <body>
   <nav class="navbar navbar-dark navbar-parqueo">
     <div class="container-fluid">
-      <a class="navbar-brand text-white fw-bold" href="index.html">🅿️ Parqueos</a>
+      <a class="navbar-brand" href="index.html">
+        <div class="navbar-brand-logo">R</div>
+        RDP S.A.
+      </a>
     </div>
   </nav>
 
   <div class="page-container">
-    <div class="text-center mb-4" style="margin-top:1rem;">
-      <div style="font-size:3rem;">🅿️</div>
-      <h2 class="fw-bold" style="color:var(--primary);">Bienvenido</h2>
-      <p class="text-muted">Inicia sesión o crea una cuenta para continuar</p>
+    <!-- Logo y bienvenida -->
+    <div class="text-center" style="padding:2rem 0 1.5rem;">
+      <div style="width:64px;height:64px;background:linear-gradient(135deg,#0F172A,#1E293B);border-radius:16px;display:inline-flex;align-items:center;justify-content:center;margin-bottom:1rem;box-shadow:0 4px 16px rgba(15,23,42,0.2);">
+        <i class="bi bi-p-circle-fill" style="font-size:2rem;color:#D4AF37;"></i>
+      </div>
+      <h2 class="fw-800" style="color:var(--rdp-navy);">Bienvenido a RDP S.A.</h2>
+      <p class="text-muted" style="font-size:0.9rem;">Inicia sesión o crea tu cuenta</p>
     </div>
 
-    <div class="card-parqueo p-3 mb-4">
-      <h5 class="fw-bold mb-3">🔑 Iniciar sesión</h5>
+    <!-- Formulario: Iniciar sesión -->
+    <div class="card-parqueo p-3 mb-3">
+      <h5 class="fw-bold mb-3" style="color:var(--rdp-navy);"><i class="bi bi-key-fill icon-inline" style="color:var(--rdp-gold);"></i>Iniciar sesión</h5>
       <form id="formLogin">
         <div class="mb-3">
-          <label class="form-label fw-semibold">Correo electrónico</label>
-          <input type="email" class="form-control" id="loginEmail" placeholder="tu@correo.com" required>
+          <label class="form-label">Correo electrónico</label>
+          <input type="email" class="form-control" id="loginEmail" placeholder="tu@correo.com" required autocomplete="email">
         </div>
-        <button type="submit" class="btn-main">Entrar</button>
+        <div class="mb-3">
+          <label class="form-label">Contraseña</label>
+          <input type="password" class="form-control" id="loginPassword" placeholder="••••••" required autocomplete="current-password" minlength="6">
+        </div>
+        <button type="submit" class="btn-gold" id="btnLogin">Entrar</button>
       </form>
     </div>
 
-    <div class="divider"><span>o regístrate</span></div>
+    <div class="divider"><span>o crea una cuenta</span></div>
 
+    <!-- Formulario: Registro -->
     <div class="card-parqueo p-3 mb-3">
-      <h5 class="fw-bold mb-3">📝 Crear cuenta</h5>
+      <h5 class="fw-bold mb-3" style="color:var(--rdp-navy);"><i class="bi bi-person-plus-fill icon-inline" style="color:var(--rdp-gold);"></i>Crear cuenta</h5>
       <form id="formRegister">
         <div class="mb-3">
-          <label class="form-label fw-semibold">Nombre</label>
-          <input type="text" class="form-control" id="regNombre" placeholder="Tu nombre" required>
+          <label class="form-label">Nombre completo</label>
+          <input type="text" class="form-control" id="regNombre" placeholder="Tu nombre" required autocomplete="name">
         </div>
         <div class="mb-3">
-          <label class="form-label fw-semibold">Correo electrónico</label>
-          <input type="email" class="form-control" id="regEmail" placeholder="tu@correo.com" required>
+          <label class="form-label">Correo electrónico</label>
+          <input type="email" class="form-control" id="regEmail" placeholder="tu@correo.com" required autocomplete="email">
         </div>
         <div class="mb-3">
-          <label class="form-label fw-semibold">Rol</label>
+          <label class="form-label">Tipo de cuenta</label>
           <select class="form-select" id="regRol" required>
-            <option value="visitante">🧳 Visitante</option>
-            <option value="anfitrion">🏠 Anfitrión</option>
+            <option value="visitante">Visitante — busco parqueo</option>
+            <option value="anfitrion">Anfitrión — ofrezco parqueo</option>
           </select>
         </div>
-        <button type="submit" class="btn-accent">Registrarse</button>
+        <button type="submit" class="btn-main" id="btnRegister">Crear cuenta</button>
       </form>
     </div>
 
@@ -63,29 +76,50 @@
   <script>
     if (getUser()) window.location.href = 'index.html';
 
+    function setLoading(btnId, loading) {
+      const btn = document.getElementById(btnId);
+      btn.disabled = loading;
+      btn.style.opacity = loading ? '0.7' : '1';
+    }
+
+    function showError(msg) {
+      document.getElementById('estadoLogin').innerHTML =
+        `<div class="alert-rdp-error"><i class="bi bi-exclamation-triangle-fill"></i> ${msg}</div>`;
+    }
+    function showSuccess(msg) {
+      document.getElementById('estadoLogin').innerHTML =
+        `<div class="alert-rdp-success"><i class="bi bi-check-circle-fill"></i> ${msg}</div>`;
+    }
+
     document.getElementById('formLogin').addEventListener('submit', function(e) {
       e.preventDefault();
-      const email = document.getElementById('loginEmail').value;
+      const email = document.getElementById('loginEmail').value.trim();
+      const password = document.getElementById('loginPassword').value;
+      setLoading('btnLogin', true);
       fetch('/api/login', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email })
+        body: JSON.stringify({ email, password })
       })
       .then(r => r.json())
       .then(resp => {
         if (resp.success) {
-          setUser(resp.user);
+          setUser(resp.user, resp.token);
           window.location.href = 'index.html';
         } else {
-          document.getElementById('estadoLogin').innerHTML = `<div class='alert alert-danger alert-parqueo'>Usuario no encontrado</div>`;
+          showError(resp.message || 'Credenciales incorrectas');
+          setLoading('btnLogin', false);
         }
-      });
+      })
+      .catch(() => { showError('Error de conexión. Intenta de nuevo.'); setLoading('btnLogin', false); });
     });
+
     document.getElementById('formRegister').addEventListener('submit', function(e) {
       e.preventDefault();
-      const nombre = document.getElementById('regNombre').value;
-      const email = document.getElementById('regEmail').value;
-      const rol = document.getElementById('regRol').value;
+      const nombre = document.getElementById('regNombre').value.trim();
+      const email  = document.getElementById('regEmail').value.trim();
+      const rol    = document.getElementById('regRol').value;
+      setLoading('btnRegister', true);
       fetch('/api/register', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -94,12 +128,14 @@
       .then(r => r.json())
       .then(resp => {
         if (resp.success) {
-          setUser(resp.user);
+          setUser(resp.user, resp.token);
           window.location.href = 'index.html';
         } else {
-          document.getElementById('estadoLogin').innerHTML = `<div class='alert alert-danger alert-parqueo'>Error al registrar</div>`;
+          showError(resp.message || 'Error al registrar. El correo puede estar en uso.');
+          setLoading('btnRegister', false);
         }
-      });
+      })
+      .catch(() => { showError('Error de conexión. Intenta de nuevo.'); setLoading('btnRegister', false); });
     });
   </script>
 </body>

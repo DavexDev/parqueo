@@ -1,0 +1,247 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Reseñas - Parqueos</title>
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css">
+  <link rel="stylesheet" href="styles.css">
+  <style>
+    .review-card { 
+      background: var(--card-bg); 
+      border-radius: 12px; 
+      padding: 1.5rem; 
+      margin-bottom: 1rem; 
+      border-left: 4px solid var(--primary);
+    }
+    .review-header { display: flex; justify-content: space-between; align-items: start; margin-bottom: 1rem; }
+    .review-author { font-weight: 700; font-size: 1rem; }
+    .review-rating { 
+      color: #ffc107; 
+      font-size: 0.95rem; 
+      font-weight: 600;
+    }
+    .review-meta { font-size: 0.8rem; color: var(--text-muted); margin-top: 0.25rem; }
+    .review-text { color: var(--text); font-size: 0.95rem; line-height: 1.5; }
+    .rating-input { font-size: 2rem; cursor: pointer; }
+    .rating-input .star { 
+      color: #ddd; 
+      margin-right: 0.25rem; 
+      transition: all 0.2s;
+    }
+    .rating-input .star:hover,
+    .rating-input .star.active { 
+      color: #ffc107; 
+      transform: scale(1.2);
+    }
+    .stats-grid { 
+      display: grid; 
+      grid-template-columns: repeat(auto-fit, minmax(120px, 1fr)); 
+      gap: 1rem; 
+      margin-bottom: 2rem;
+    }
+    .stat-card {
+      background: var(--card-bg);
+      padding: 1.5rem;
+      border-radius: 8px;
+      text-align: center;
+      border-top: 3px solid var(--primary);
+    }
+    .stat-number { font-size: 1.8rem; font-weight: 700; color: var(--primary); }
+    .stat-label { font-size: 0.8rem; color: var(--text-muted); margin-top: 0.25rem; }
+    .review-form { background: var(--card-bg); padding: 2rem; border-radius: 12px; margin-bottom: 2rem; }
+    .form-section { margin-bottom: 1.5rem; }
+    .form-section label { font-weight: 600; margin-bottom: 0.5rem; display: block; }
+    .textarea-counter { font-size: 0.8rem; color: var(--text-muted); margin-top: 0.25rem; }
+  </style>
+</head>
+<body>
+  <nav class="navbar navbar-dark navbar-parqueo">
+    <div class="container-fluid">
+      <a class="navbar-brand text-white fw-bold" href="index.html"><i class="bi bi-star-fill icon-inline"></i>Reseñas</a>
+    </div>
+  </nav>
+
+  <div class="page-container" style="max-width:700px;">
+    <!-- Header -->
+    <div style="margin-bottom:2rem;">
+      <h1 style="font-size:1.75rem;font-weight:700;margin-bottom:0.5rem;display:flex;align-items:center;gap:0.5rem;">
+        <i class="bi bi-p-circle-fill"></i>
+        <span id="parkingName">Parqueo</span>
+      </h1>
+      <div style="display:flex;align-items:center;gap:1rem;color:var(--text-muted);font-size:0.9rem;">
+        <span id="parkingRating">
+          <i class="bi bi-star-fill" style="color:#ffc107;"></i>
+          <strong>4.5</strong>
+        </span>
+        <span id="reviewCount">12 reseñas</span>
+      </div>
+    </div>
+
+    <!-- Stats -->
+    <div class="stats-grid">
+      <div class="stat-card">
+        <div class="stat-number">4.5</div>
+        <div class="stat-label">Calificación</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-number">12</div>
+        <div class="stat-label">Total reseñas</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-number">95%</div>
+        <div class="stat-label">Recomendado</div>
+      </div>
+    </div>
+
+    <!-- Formulario para escribir reseña -->
+    <div class="review-form">
+      <h3 style="font-size:1.2rem;font-weight:700;margin-bottom:1.5rem;">Escribe tu reseña</h3>
+      
+      <div class="form-section">
+        <label>¿Qué tan buena fue tu experiencia?</label>
+        <div class="rating-input" id="ratingInput">
+          ${[1,2,3,4,5].map(i => `<span class="star" data-value="${i}" onclick="selectRating(${i})">★</span>`).join('')}
+        </div>
+        <p style="font-size:0.85rem;color:var(--text-muted);margin-top:0.5rem;display:none;" id="ratingText"></p>
+      </div>
+
+      <div class="form-section">
+        <label for="reviewText">Tu comentario (opcional)</label>
+        <textarea class="form-control" id="reviewText" rows="4" placeholder="Cuéntanos tu experiencia..." maxlength="500" onchange="updateCounter()"></textarea>
+        <div class="textarea-counter">
+          <span id="charCount">0</span>/500 caracteres
+        </div>
+      </div>
+
+      <div class="form-section">
+        <label style="display:flex;align-items:center;gap:0.5rem;font-weight:normal;cursor:pointer;">
+          <input type="checkbox" id="recommend" checked>
+          <span>Recomiendo este parqueo</span>
+        </label>
+      </div>
+
+      <button class="btn btn-primary" style="width:100%;" onclick="enviarReseña()">
+        <i class="bi bi-send"></i> Enviar Reseña
+      </button>
+    </div>
+
+    <!-- Reseñas -->
+    <h3 style="font-size:1.2rem;font-weight:700;margin-bottom:1rem;">Todas las reseñas</h3>
+    <div id="reviewsList">
+      ${generateMockReviews()}
+    </div>
+  </div>
+
+  <script src="app.js"></script>
+  <script>
+    let ratingSeleccionado = 0;
+    let parkingId = null;
+
+    document.addEventListener('DOMContentLoaded', () => {
+      requireLogin();
+      renderNavbar();
+      renderBottomBar('reviews');
+      
+      // Obtener parkingId de URL
+      const params = new URLSearchParams(window.location.search);
+      parkingId = params.get('id') || 1;
+      
+      cargarParqueo(parkingId);
+    });
+
+    function cargarParqueo(id) {
+      // Mock: solo para demo
+      fetch(`/api/parkings/${id}`)
+        .then(r => r.json())
+        .then(p => {
+          document.getElementById('parkingName').textContent = p.nombre || 'Parqueo';
+        })
+        .catch(() => {
+          // Si falla, dejar el nombre por defecto
+        });
+    }
+
+    function selectRating(valor) {
+      ratingSeleccionado = valor;
+      updateRatingStars(valor);
+      
+      const textos = {
+        1: 'Muy malo',
+        2: 'Malo',
+        3: 'Normal',
+        4: 'Bueno',
+        5: 'Excelente'
+      };
+      document.getElementById('ratingText').textContent = textos[valor];
+      document.getElementById('ratingText').style.display = 'block';
+    }
+
+    function updateRatingStars(valor) {
+      document.querySelectorAll('#ratingInput .star').forEach((star, idx) => {
+        if (idx < valor) {
+          star.classList.add('active');
+        } else {
+          star.classList.remove('active');
+        }
+      });
+    }
+
+    function updateCounter() {
+      const count = document.getElementById('reviewText').value.length;
+      document.getElementById('charCount').textContent = count;
+    }
+
+    function enviarReseña() {
+      if (ratingSeleccionado === 0) {
+        alert('Por favor selecciona una calificación');
+        return;
+      }
+
+      const texto = document.getElementById('reviewText').value;
+      const recomendado = document.getElementById('recommend').checked;
+
+      // Mock: guardar en localStorage para demo
+      const reseña = {
+        id: Date.now(),
+        parkingId: parkingId,
+        rating: ratingSeleccionado,
+        text: texto || '(sin comentario)',
+        recommend: recomendado,
+        author: getUser().nombre,
+        date: new Date().toLocaleDateString('es-GT')
+      };
+
+      const reseñas = JSON.parse(localStorage.getItem('reviews') || '[]');
+      reseñas.push(reseña);
+      localStorage.setItem('reviews', JSON.stringify(reseñas));
+
+      alert('✓ ¡Gracias por tu reseña!');
+      location.reload();
+    }
+
+    function generateMockReviews() {
+      const reviews = [
+        { author: 'Juan Morales', rating: 5, text: 'Excelente ubicación, muy seguro. El anfitrión respondió rápido.', date: '2 de enero' },
+        { author: 'María García', rating: 4, text: 'Buen parqueo pero un poco estrecho para autos grandes.', date: '28 de diciembre' },
+        { author: 'Pedro López', rating: 5, text: 'Perfecto para visitar la Basílica, recomendado.', date: '20 de diciembre' },
+        { author: 'Ana Ruiz', rating: 4, text: 'Seguro y accesible. Volveré a usar.', date: '15 de diciembre' },
+        { author: 'Carlos Vega', rating: 5, text: 'Servicio muy profesional, anfitrión amable.', date: '10 de diciembre' }
+      ];
+
+      return reviews.map(r => `
+        <div class="review-card">
+          <div class="review-header">
+            <div>
+              <div class="review-author"><i class="bi bi-person-circle"></i> ${r.author}</div>
+              <div class="review-meta">${r.date}</div>
+            </div>
+            <div class="review-rating">${'★'.repeat(r.rating)}${'☆'.repeat(5-r.rating)}</div>
+          </div>
+          <p class="review-text">${r.text}</p>
+        </div>
+      `).join('');
+    }
+  </script>
+</body>
+</html>

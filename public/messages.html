@@ -10,12 +10,12 @@
 <body>
   <nav class="navbar navbar-dark navbar-parqueo">
     <div class="container-fluid">
-      <a class="navbar-brand text-white fw-bold" href="index.html">🅿️ Parqueos</a>
+      <a class="navbar-brand text-white fw-bold" href="index.html"><i class="bi bi-p-circle-fill icon-inline"></i>Parqueos</a>
     </div>
   </nav>
 
   <div class="page-container" style="padding-bottom:80px;">
-    <h2 class="section-title">💬 Mensajes</h2>
+    <h2 class="section-title"><i class="bi bi-chat-dots-fill icon-inline"></i>Mensajes</h2>
     <div id="userInfo" class="mb-3"></div>
 
     <div class="chat-container">
@@ -26,7 +26,7 @@
         </div>
         <form id="formMsg" class="mt-2 d-flex gap-2" style="display:none;">
           <input type="text" class="form-control" id="textoMsg" placeholder="Escribe un mensaje..." required>
-          <button type="submit" class="btn-main" style="min-width:auto;padding:0.6rem 1rem;">➤</button>
+          <button type="submit" class="btn-main" style="min-width:auto;padding:0.6rem 1rem;"><i class="bi bi-send-fill"></i></button>
         </form>
         <div id="emailStatus" class="mt-2 small"></div>
       </div>
@@ -75,11 +75,11 @@
               }
               contactos.forEach(u => {
                 const tieneMsg = idsConMensaje.has(u.id);
-                const icon = u.rol === 'anfitrion' ? '🏠' : '🧳';
+                const icon = u.rol === 'anfitrion' ? 'bi-house-door-fill' : 'bi-person-circle';
                 cont.innerHTML += `
                   <div class="contact-item ${chatWithId === u.id ? 'active' : ''}" data-id="${u.id}">
                     <div class="d-flex align-items-center gap-2">
-                      <span style="font-size:1.4rem;">${icon}</span>
+                      <span class="icon-only" style="font-size:1.2rem;"><i class="bi ${icon}"></i></span>
                       <div>
                         <div class="fw-bold">${u.nombre}</div>
                         <small class="text-muted">${u.rol}</small>
@@ -97,7 +97,7 @@
                   this.classList.add('active');
                   fetch('/api/messages/read', {
                     method: 'PUT',
-                    headers: { 'Content-Type': 'application/json' },
+                    headers: getHeaders(),
                     body: JSON.stringify({ userId: currentUserId, otroId: chatWithId })
                   });
                 });
@@ -140,7 +140,7 @@
       if (!texto || !chatWithId) return;
       fetch('/api/messages', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: getHeaders(),
         body: JSON.stringify({ deId: currentUserId, paraId: chatWithId, texto })
       })
       .then(r => r.json())
@@ -148,7 +148,7 @@
         document.getElementById('textoMsg').value = '';
         cargarChat();
         if (resp.mensaje && resp.mensaje.emailEnviado) {
-          document.getElementById('emailStatus').innerHTML = '<span class="text-success">✉️ Notificación enviada por email</span>';
+          document.getElementById('emailStatus').innerHTML = '<span class="text-success"><i class="bi bi-envelope-check-fill icon-inline"></i>Notificación enviada por email</span>';
         } else if (resp.mensaje && resp.mensaje.emailError) {
           document.getElementById('emailStatus').innerHTML = `<span class="text-warning">Email no enviado (demo): ${resp.mensaje.emailError}</span>`;
         } else {

@@ -1,0 +1,39 @@
+name: CI — RDP S.A.
+
+on:
+  push:
+    branches: [main, develop]
+  pull_request:
+    branches: [main]
+
+jobs:
+  check:
+    name: Lint & Audit
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+
+      - name: Install dependencies (sin scripts de postinstall)
+        run: npm ci --ignore-scripts
+
+      - name: Audit de seguridad
+        run: npm audit --audit-level=high
+        continue-on-error: false
+
+      - name: Verificar que server.js exporta correctamente
+        run: node -e "const app = require('./server'); if (typeof app !== 'function') process.exit(1); console.log('✓ server.js export OK');"
+        env:
+          NODE_ENV: test
+
+      - name: Verificar que api/index.js carga
+        run: node -e "require('./api/index.js'); console.log('✓ api/index.js OK');"
+        env:
+          NODE_ENV: test

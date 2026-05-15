@@ -1,0 +1,383 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Mi Negocio - Anfitrión</title>
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css">
+  <link rel="stylesheet" href="styles.css">
+  <style>
+    .earnings-card { background: linear-gradient(135deg, #2e7d32 0%, #1b5e20 100%); color: white; padding: 2rem; border-radius: 12px; margin-bottom: 1.5rem; }
+    .earnings-number { font-size: 2.5rem; font-weight: 700; margin: 0; }
+    .earnings-label { font-size: 0.9rem; opacity: 0.9; }
+    .stat-row { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; margin-bottom: 1rem; }
+    .stat-mini { background: var(--card-bg); padding: 1rem; border-radius: 8px; text-align: center; border-left: 3px solid var(--primary); }
+    .stat-mini-num { font-size: 1.8rem; font-weight: 700; color: var(--primary); }
+    .stat-mini-label { font-size: 0.8rem; color: var(--text-muted); margin-top: 0.25rem; }
+    .parking-item { background: var(--card-bg); border-left: 4px solid var(--primary); padding: 1.5rem; border-radius: 8px; margin-bottom: 1rem; display: flex; justify-content: space-between; align-items: start; }
+    .parking-info h3 { margin: 0 0 0.5rem 0; font-size: 1.1rem; font-weight: 700; }
+    .parking-meta { font-size: 0.85rem; color: var(--text-muted); }
+    .parking-actions { display: flex; gap: 0.5rem; flex-wrap: wrap; justify-content: flex-end; }
+    .reservation-timeline { position: relative; padding-left: 2rem; }
+    .reservation-timeline::before { content: ''; position: absolute; left: 0; top: 0; bottom: 0; width: 2px; background: linear-gradient(180deg, var(--primary), transparent); }
+    .timeline-item { margin-bottom: 1.5rem; padding-bottom: 1.5rem; border-bottom: 1px solid #e0e0e0; }
+    .timeline-item:last-child { border-bottom: none; }
+    .timeline-dot { position: absolute; left: -7px; top: 0; width: 12px; height: 12px; background: var(--primary); border-radius: 50%; }
+    .calendar-grid { display: grid; grid-template-columns: repeat(7, 1fr); gap: 0.5rem; margin-top: 1rem; }
+    .calendar-day { aspect-ratio: 1; display: flex; align-items: center; justify-content: center; border-radius: 6px; font-size: 0.8rem; font-weight: 600; background: #f5f5f5; }
+    .calendar-day.booked { background: #ffcdd2; color: #b71c1c; }
+    .calendar-day.available { background: #c8e6c9; color: #1b5e20; }
+  </style>
+</head>
+<body>
+  <nav class="navbar navbar-dark navbar-parqueo">
+    <div class="container-fluid">
+      <a class="navbar-brand text-white fw-bold" href="index.html"><i class="bi bi-shop icon-inline"></i>Mi Negocio</a>
+      <button class="btn btn-outline-light btn-sm" onclick="toggleDarkMode()" title="Dark Mode">
+        <i class="bi bi-moon-stars-fill"></i>
+      </button>
+    </div>
+  </nav>
+
+  <div class="page-container" style="max-width:1000px;">
+    <!-- Ganancias -->
+    <div class="earnings-card">
+      <p class="earnings-label"><i class="bi bi-cash-coin icon-inline"></i> Ingresos totales</p>
+      <p class="earnings-number" id="totalEarnings">Q 0.00</p>
+      <p style="font-size:0.85rem;margin-top:0.5rem;">Este mes: <strong id="monthEarnings">Q 0.00</strong></p>
+    </div>
+
+    <!-- Stats Rápidos -->
+    <div class="stat-row">
+      <div class="stat-mini">
+        <div class="stat-mini-num" id="statParqueos">0</div>
+        <div class="stat-mini-label">Mis Parqueos</div>
+      </div>
+      <div class="stat-mini">
+        <div class="stat-mini-num" id="statReservas">0</div>
+        <div class="stat-mini-label">Reservas Pendientes</div>
+      </div>
+    </div>
+
+    <!-- Tabs -->
+    <ul class="nav nav-tabs mb-4" id="hostTabs" role="tablist">
+      <li class="nav-item">
+        <a class="nav-link active" data-bs-toggle="tab" href="#tabMisParqueos">
+          <i class="bi bi-p-circle-fill icon-inline"></i>Mis Parqueos
+        </a>
+      </li>
+      <li class="nav-item">
+        <a class="nav-link" data-bs-toggle="tab" href="#tabReservas">
+          <i class="bi bi-calendar-check icon-inline"></i>Reservas Recibidas
+        </a>
+      </li>
+      <li class="nav-item">
+        <a class="nav-link" data-bs-toggle="tab" href="#tabCalendario">
+          <i class="bi bi-calendar-event icon-inline"></i>Calendario
+        </a>
+      </li>
+    </ul>
+
+    <div class="tab-content">
+      <!-- TAB: Mis Parqueos -->
+      <div class="tab-pane fade show active" id="tabMisParqueos">
+        <div id="misParkings">
+          <div class="text-center text-muted py-5">
+            <i class="bi bi-hourglass-split" style="font-size:2.5rem;margin-bottom:1rem;display:block;"></i>
+            Cargando parqueos...
+          </div>
+        </div>
+      </div>
+
+      <!-- TAB: Reservas Recibidas -->
+      <div class="tab-pane fade" id="tabReservas">
+        <div id="misReservas">
+          <div class="text-center text-muted py-5">
+            <i class="bi bi-hourglass-split" style="font-size:2.5rem;margin-bottom:1rem;display:block;"></i>
+            Cargando reservas...
+          </div>
+        </div>
+      </div>
+
+      <!-- TAB: Calendario -->
+      <div class="tab-pane fade" id="tabCalendario">
+        <div id="calendario">
+          <div class="text-center text-muted py-5">
+            Próximamente: Vista de calendario detallada
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script src="app.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+  <script>
+    let misDatos = {
+      parqueos: [],
+      reservas: []
+    };
+
+    document.addEventListener('DOMContentLoaded', () => {
+      const user = requireLogin(['anfitrion']);
+      if (!user) return;
+
+      renderNavbar();
+      renderBottomBar('host');
+      cargarDatos(user.id);
+    });
+
+    function cargarDatos(anfitrionId) {
+      // Cargar parqueos del anfitrión
+      fetch(`/api/parkings?anfitrionId=${anfitrionId}`, { headers: getHeaders() })
+        .then(r => r.json())
+        .then(parkings => {
+          misDatos.parqueos = parkings.filter(p => p.anfitrionId === anfitrionId);
+          renderParqueos();
+          actualizarStats();
+        })
+        .catch(e => console.error('Error cargando parqueos:', e));
+
+      // Cargar todas las reservas para filtrar por mis parqueos
+      fetch('/api/admin/reservations', { headers: getHeaders() })
+        .then(r => r.json())
+        .then(reservas => {
+          const misParqueoIds = misDatos.parqueos.map(p => p.id);
+          misDatos.reservas = reservas.filter(r => misParqueoIds.includes(r.parqueoId));
+          renderReservas();
+          actualizarStats();
+        })
+        .catch(e => console.error('Error cargando reservas:', e));
+    }
+
+    function renderParqueos() {
+      const cont = document.getElementById('misParkings');
+      
+      if (misDatos.parqueos.length === 0) {
+        cont.innerHTML = `
+          <div style="text-align:center;padding:2rem;">
+            <i class="bi bi-inbox" style="font-size:2.5rem;color:var(--text-muted);margin-bottom:1rem;display:block;"></i>
+            <p style="color:var(--text-muted);">Aún no has publicado parqueos</p>
+            <a href="publish.html" class="btn btn-primary btn-sm">Publicar mi primer parqueo</a>
+          </div>
+        `;
+        return;
+      }
+
+      cont.innerHTML = misDatos.parqueos.map(p => {
+        const reservasDelParqueo = misDatos.reservas.filter(r => r.parqueoId === p.id);
+        const rating = 4.5;
+        const reviews = 12;
+
+        return `
+          <div class="parking-item">
+            <div class="parking-info" style="flex:1;">
+              <h3><i class="bi bi-p-circle-fill icon-inline"></i>${p.nombre}</h3>
+              <p class="parking-meta">${p.direccion}</p>
+              <p class="parking-meta" style="margin-top:0.5rem;">
+                <span class="badge badge-primary">${p.tipo}</span>
+                <span style="margin-left:0.5rem;font-weight:600;">Q${p.precio}/día</span>
+              </p>
+              <p class="parking-meta" style="margin-top:0.75rem;">
+                <i class="bi bi-star-fill" style="color:#ffc107;"></i>
+                <strong>${rating}</strong> (${reviews} reseñas) · 
+                ${reservasDelParqueo.length} reservas
+              </p>
+            </div>
+            <div class="parking-actions">
+              <button class="btn btn-outline-primary btn-sm" onclick="editarParqueo(${p.id})">
+                <i class="bi bi-pencil"></i>Editar
+              </button>
+              <button class="btn btn-outline-info btn-sm" onclick="verReseñas(${p.id})">
+                <i class="bi bi-chat-dots"></i>Reseñas
+              </button>
+            </div>
+          </div>
+        `;
+      }).join('');
+    }
+
+    function renderReservas() {
+      const cont = document.getElementById('misReservas');
+      
+      if (misDatos.reservas.length === 0) {
+        cont.innerHTML = `
+          <div style="text-align:center;padding:2rem;color:var(--text-muted);">
+            <i class="bi bi-inbox" style="font-size:2.5rem;margin-bottom:1rem;display:block;"></i>
+            No hay reservas aún
+          </div>
+        `;
+        return;
+      }
+
+      cont.innerHTML = misDatos.reservas.map(r => {
+        const estadoColor = {
+          'pendiente': '#fff9c4',
+          'confirmada': '#c8e6c9',
+          'finalizada': '#e0e0e0',
+          'cancelada': '#ffcdd2'
+        }[r.estado] || '#f5f5f5';
+
+        const estadoTexto = {
+          'pendiente': '⏳ Por confirmar',
+          'confirmada': '✓ Confirmada',
+          'finalizada': '✓ Finalizada',
+          'cancelada': '✗ Cancelada'
+        }[r.estado] || r.estado;
+
+        const fechaInicio = new Date(r.fechaInicio).toLocaleDateString('es-GT');
+        const fechaFin = new Date(r.fechaFin).toLocaleDateString('es-GT');
+
+        return `
+          <div style="position:relative;margin-bottom:1.5rem;padding-bottom:1.5rem;border-bottom:1px solid #e0e0e0;">
+            <div style="display:flex;justify-content:space-between;align-items:start;">
+              <div style="flex:1;">
+                <h3 style="margin:0 0 0.5rem 0;font-size:1.1rem;font-weight:700;">
+                  ${r.usuarioNombre}
+                </h3>
+                <p style="color:var(--text-muted);font-size:0.9rem;margin:0 0 0.5rem 0;">
+                  <strong>${r.parqueoNombre}</strong> · ${fechaInicio} a ${fechaFin}
+                </p>
+                <p style="color:var(--text-muted);font-size:0.85rem;margin:0;">
+                  Ingresos: <strong style="color:var(--primary);">Q${r.precio}</strong>
+                </p>
+              </div>
+              <div style="background:${estadoColor};padding:0.5rem 1rem;border-radius:20px;font-size:0.85rem;font-weight:600;">
+                ${estadoTexto}
+              </div>
+            </div>
+            <div style="margin-top:1rem;display:flex;gap:0.5rem;">
+              ${r.estado === 'pendiente' ? `
+                <button class="btn btn-success btn-sm" onclick="confirmarReserva(${r.id})">
+                  <i class="bi bi-check"></i>Confirmar
+                </button>
+                <button class="btn btn-outline-danger btn-sm" onclick="rechazarReserva(${r.id})">
+                  <i class="bi bi-x"></i>Rechazar
+                </button>
+              ` : ''}
+              <button class="btn btn-outline-info btn-sm" onclick="contactarVisitante('${r.usuarioNombre}', ${r.usuarioId})">
+                <i class="bi bi-chat-dots"></i>Mensaje
+              </button>
+            </div>
+          </div>
+        `;
+      }).join('');
+    }
+
+    function actualizarStats() {
+      // Calcular ganancias
+      const ingresoTotal = misDatos.reservas
+        .filter(r => r.estado === 'confirmada' || r.estado === 'finalizada')
+        .reduce((sum, r) => sum + (r.precio || 0), 0);
+
+      const ingresoMes = misDatos.reservas
+        .filter(r => {
+          const fecha = new Date(r.fechaInicio);
+          const ahora = new Date();
+          return fecha.getMonth() === ahora.getMonth() && 
+                 fecha.getFullYear() === ahora.getFullYear() &&
+                 (r.estado === 'confirmada' || r.estado === 'finalizada');
+        })
+        .reduce((sum, r) => sum + (r.precio || 0), 0);
+
+      document.getElementById('totalEarnings').textContent = `Q ${ingresoTotal.toLocaleString('es-GT', { minimumFractionDigits: 2 })}`;
+      document.getElementById('monthEarnings').textContent = `Q ${ingresoMes.toLocaleString('es-GT', { minimumFractionDigits: 2 })}`;
+      document.getElementById('statParqueos').textContent = misDatos.parqueos.length;
+      document.getElementById('statReservas').textContent = misDatos.reservas.filter(r => r.estado === 'pendiente').length;
+    }
+
+    function confirmarReserva(id) {
+      fetch(`/api/admin/reservations/${id}`, {
+        method: 'PUT',
+        headers: getHeaders(),
+        body: JSON.stringify({ estado: 'confirmada' })
+      })
+        .then(r => r.json())
+        .then(resp => {
+          if (resp.success) {
+            alert('✓ Reserva confirmada');
+            location.reload();
+          }
+        })
+        .catch(e => alert('Error: ' + e));
+    }
+
+    function rechazarReserva(id) {
+      if (!confirm('¿Rechazar esta reserva?')) return;
+      fetch(`/api/admin/reservations/${id}`, {
+        method: 'PUT',
+        headers: getHeaders(),
+        body: JSON.stringify({ estado: 'cancelada' })
+      })
+        .then(r => r.json())
+        .then(resp => {
+          if (resp.success) {
+            alert('Reserva rechazada');
+            location.reload();
+          }
+        })
+        .catch(e => alert('Error: ' + e));
+    }
+
+    function contactarVisitante(nombre, usuarioId) {
+      window.location.href = `messages.html?contact=${usuarioId}`;
+    }
+
+    function editarParqueo(id) {
+      alert('Editar parqueo #' + id + ' (próximamente)');
+    }
+
+    function verReseñas(id) {
+      // Mostrar modal con reseñas mock
+      const modal = document.createElement('div');
+      modal.className = 'modal fade';
+      modal.innerHTML = `
+        <div class="modal-dialog">
+          <div class="modal-content">
+            <div class="modal-header">
+              <h5 class="modal-title"><i class="bi bi-star-fill"></i> Reseñas</h5>
+              <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+              <div style="margin-bottom:1.5rem;">
+                <p style="text-align:center;margin:0;">
+                  <i class="bi bi-star-fill" style="color:#ffc107;font-size:1.5rem;"></i>
+                  <span style="font-size:1.8rem;font-weight:700;">4.5</span>
+                </p>
+                <p style="text-align:center;color:var(--text-muted);font-size:0.9rem;">Basado en 12 reseñas</p>
+              </div>
+              
+              ${[
+                { user: 'Juan M.', rating: 5, text: 'Parqueo excelente, muy seguro y bien ubicado' },
+                { user: 'María G.', rating: 4, text: 'Buena ubicación, pero un poco estrecho' },
+                { user: 'Pedro L.', rating: 5, text: '¡Perfecto! Volveré con seguridad' }
+              ].map(r => `
+                <div style="border-bottom:1px solid #e0e0e0;padding-bottom:1rem;margin-bottom:1rem;">
+                  <div style="display:flex;justify-content:space-between;align-items:start;">
+                    <strong>${r.user}</strong>
+                    <span style="color:#ffc107;">${'★'.repeat(r.rating)}${'☆'.repeat(5-r.rating)}</span>
+                  </div>
+                  <p style="color:var(--text-muted);margin:0.5rem 0 0 0;font-size:0.9rem;">${r.text}</p>
+                </div>
+              `).join('')}
+            </div>
+          </div>
+        </div>
+      `;
+      document.body.appendChild(modal);
+      new bootstrap.Modal(modal).show();
+      modal.addEventListener('hidden.bs.modal', () => modal.remove());
+    }
+
+    function toggleDarkMode() {
+      document.body.classList.toggle('dark-mode');
+      localStorage.setItem('darkMode', document.body.classList.contains('dark-mode'));
+    }
+
+    // Cargar dark mode setting
+    if (localStorage.getItem('darkMode') === 'true') {
+      document.body.classList.add('dark-mode');
+    }
+  </script>
+</body>
+</html>
