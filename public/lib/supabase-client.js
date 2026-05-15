@@ -283,9 +283,46 @@
     if (!client) return { data: [], error: null };
     return client
       .from('reservations')
-      .select('*, parkings!inner(nombre, anfitrion_id), profiles(nombre, telefono)')
-      .eq('parkings.anfitrion_id', hostId)
+      .select('*, parking:parkings!inner(id, nombre, anfitrion_id), usuario:profiles!usuario_id(id, nombre, telefono)')
+      .eq('parking.anfitrion_id', hostId)
       .order('created_at', { ascending: false });
+  }
+
+  async function getHostParkings(hostId) {
+    const client = getClient();
+    if (!client) return { data: [], error: null };
+    return client
+      .from('parkings_with_host')
+      .select('*')
+      .eq('anfitrion_id', hostId)
+      .is('deleted_at', null)
+      .order('created_at', { ascending: false });
+  }
+
+  async function getHostMembership(hostId) {
+    const client = getClient();
+    if (!client) return { data: null, error: null };
+    return client
+      .from('memberships')
+      .select('*')
+      .eq('anfitrion_id', hostId)
+      .eq('estado', 'activa')
+      .order('fecha_fin', { ascending: false })
+      .limit(1)
+      .single();
+  }
+
+  async function createIncident(reporterId, parkingId, descripcion) {
+    const client = getClient();
+    if (!client) return { error: { message: 'Supabase no configurado' } };
+    return client.from('incidents').insert({
+      reporter_id: reporterId,
+      parking_id: parkingId || null,
+      tipo: 'otro',
+      descripcion,
+      estado: 'abierto',
+      prioridad: 3
+    }).select().single();
   }
 
   async function updateReservationStatus(id, estado, extra = {}) {
@@ -446,6 +483,10 @@
     rejectParking,
     deleteUser,
     getAdminReservations,
+    // Host
+    getHostParkings,
+    getHostMembership,
+    createIncident,
     // Reseñas
     getParkingRatings,
     createRating,

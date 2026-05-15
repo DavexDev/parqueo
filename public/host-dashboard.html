@@ -145,7 +145,7 @@
             <div class="card-parqueo p-3" style="border:2px solid #e5e7eb;">
               <div class="d-flex justify-content-between align-items-start">
                 <div>
-                  <h6 class="fw-bold mb-1">🆓 Básico</h6>
+                  <h6 class="fw-bold mb-1"><i class="bi bi-circle icon-inline"></i>Básico</h6>
                   <ul class="mb-0" style="font-size:.85rem;color:#6b7280;padding-left:1.2rem;">
                     <li>Hasta 2 parqueos publicados</li>
                     <li>Sin espacios destacados</li>
@@ -163,13 +163,12 @@
             <div class="card-parqueo p-3" style="border:2px solid var(--rdp-gold,#D4AF37);background:rgba(212,175,55,.04);">
               <div class="d-flex justify-content-between align-items-start">
                 <div>
-                  <h6 class="fw-bold mb-1"><i class="bi bi-star-fill" style="color:#ffc107;"></i> Premium</h6>
+                  <h6 class="fw-bold mb-1"><i class="bi bi-star-fill icon-inline" style="color:#D4AF37;"></i>Premium</h6>
                   <ul class="mb-0" style="font-size:.85rem;color:#374151;padding-left:1.2rem;">
                     <li>Parqueos ilimitados</li>
                     <li>3 espacios destacados en búsqueda</li>
-                    <li>Insignia verificado <i class="bi bi-check-lg"></i></li>
+                    <li>Insignia verificado</li>
                     <li>Estadísticas avanzadas</li>
-                    <li>Comisión 17% sin cambios</li>
                   </ul>
                 </div>
                 <div class="text-end">
@@ -177,8 +176,8 @@
                   <small class="text-muted">/mes</small>
                 </div>
               </div>
-              <button class="btn-main mt-3" style="width:100%;" onclick="activarPremium()">
-                <i class="bi bi-star-fill icon-inline"></i>Activar Premium
+              <button class="btn-main mt-3" style="width:100%;" onclick="solicitarPremium()">
+                <i class="bi bi-star-fill icon-inline"></i>Solicitar Premium
               </button>
             </div>
 
@@ -186,13 +185,12 @@
             <div class="card-parqueo p-3" style="border:2px solid #7c3aed;background:rgba(124,58,237,.03);">
               <div class="d-flex justify-content-between align-items-start">
                 <div>
-                  <h6 class="fw-bold mb-1" style="color:#7c3aed;">🏢 Negocios</h6>
+                  <h6 class="fw-bold mb-1" style="color:#7c3aed;"><i class="bi bi-building icon-inline"></i>Negocios</h6>
                   <ul class="mb-0" style="font-size:.85rem;color:#374151;padding-left:1.2rem;">
                     <li>Todo lo de Premium</li>
                     <li>Panel multi-parqueo</li>
                     <li>API de integración</li>
                     <li>Soporte prioritario</li>
-                    <li>Publicidad en el directorio</li>
                   </ul>
                 </div>
                 <div class="text-end">
@@ -200,10 +198,39 @@
                   <small class="text-muted">/mes</small>
                 </div>
               </div>
-              <button class="btn-ghost mt-3" style="width:100%;border-color:#7c3aed;color:#7c3aed;">
+              <button class="btn-ghost mt-3" style="width:100%;border-color:#7c3aed;color:#7c3aed;" onclick="solicitarNegocios()">
                 <i class="bi bi-envelope icon-inline"></i>Contactar ventas
               </button>
             </div>
+          </div>
+
+          <!-- Sección: Destacar Parqueo -->
+          <hr class="my-4">
+          <h6 class="fw-bold mb-1" style="color:var(--rdp-navy);"><i class="bi bi-lightning-fill icon-inline" style="color:#D4AF37;"></i>Destacar un parqueo</h6>
+          <p class="text-muted mb-3" style="font-size:.85rem;">Tu parqueo aparecerá en la parte superior de los resultados durante el período que elijas.</p>
+          <div id="formDestacar" style="background:var(--card-bg);border-radius:12px;padding:1.25rem;border:1px solid #e5e7eb;">
+            <div class="mb-3">
+              <label class="form-label fw-semibold" style="font-size:.9rem;">Selecciona parqueo</label>
+              <select id="selectParqueoDestacar" class="form-select form-select-sm">
+                <option value="">-- Selecciona --</option>
+              </select>
+            </div>
+            <div class="row g-2 mb-3">
+              <div class="col-6">
+                <label class="form-label fw-semibold" style="font-size:.9rem;">Desde</label>
+                <input type="date" id="destacarDesde" class="form-control form-control-sm">
+              </div>
+              <div class="col-6">
+                <label class="form-label fw-semibold" style="font-size:.9rem;">Hasta</label>
+                <input type="date" id="destacarHasta" class="form-control form-control-sm">
+              </div>
+            </div>
+            <div class="mb-3" id="precioDestacado" style="font-size:.85rem;color:#374151;display:none;">
+              Costo estimado: <strong id="costoDestacado">Q0</strong> <span class="text-muted">(Q50/semana)</span>
+            </div>
+            <button class="btn-main" style="width:100%;" onclick="solicitarDestacado()">
+              <i class="bi bi-lightning-fill icon-inline"></i>Solicitar espacio destacado
+            </button>
           </div>
         </div>
       </div>
@@ -215,294 +242,200 @@
   <script src="app.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
   <script>
-    let misDatos = {
-      parqueos: [],
-      reservas: []
-    };
+    let misDatos = { parqueos: [], reservas: [] };
+    let hostUser = null;
 
-    document.addEventListener('DOMContentLoaded', () => {
-      const user = requireLogin(['visitante','anfitrion','admin']);
-      if (!user) return;
-
+    document.addEventListener('DOMContentLoaded', async () => {
+      hostUser = requireLogin(['visitante','anfitrion','admin']);
+      if (!hostUser) return;
       renderNavbar();
       renderBottomBar('host');
-      cargarDatos(user.id);
+
+      // Fechas por defecto para Destacar
+      const hoy = new Date().toISOString().split('T')[0];
+      const en7 = new Date(Date.now() + 7*24*3600*1000).toISOString().split('T')[0];
+      document.getElementById('destacarDesde').min = hoy;
+      document.getElementById('destacarDesde').value = hoy;
+      document.getElementById('destacarHasta').min = hoy;
+      document.getElementById('destacarHasta').value = en7;
+      ['destacarDesde','destacarHasta'].forEach(id => document.getElementById(id).addEventListener('change', calcularCostoDestacado));
+
+      await cargarDatos();
+      cargarMembresia();
+
+      if (localStorage.getItem('darkMode') === 'true') document.body.classList.add('dark-mode');
     });
 
-    function cargarDatos(anfitrionId) {
-      // Cargar parqueos del anfitrión
-      fetch(`/api/parkings?anfitrionId=${anfitrionId}`, { headers: getHeaders() })
-        .then(r => r.json())
-        .then(parkings => {
-          misDatos.parqueos = parkings.filter(p => p.anfitrionId === anfitrionId);
-          renderParqueos();
-          actualizarStats();
-        })
-        .catch(e => console.error('Error cargando parqueos:', e));
-
-      // Cargar todas las reservas para filtrar por mis parqueos
-      fetch('/api/admin/reservations', { headers: getHeaders() })
-        .then(r => r.json())
-        .then(reservas => {
-          const misParqueoIds = misDatos.parqueos.map(p => p.id);
-          misDatos.reservas = reservas.filter(r => misParqueoIds.includes(r.parqueoId));
-          renderReservas();
-          actualizarStats();
-        })
-        .catch(e => console.error('Error cargando reservas:', e));
+    // ── DATOS ─────────────────────────────────────────────────────
+    async function cargarDatos() {
+      const [parkRes, resRes] = await Promise.all([
+        window.rdpSupabase.getHostParkings(hostUser.id),
+        window.rdpSupabase.getHostReservations(hostUser.id)
+      ]);
+      misDatos.parqueos = parkRes.data || [];
+      misDatos.reservas = resRes.data || [];
+      renderParqueos();
+      renderReservas();
+      actualizarStats();
+      poblarSelectDestacar();
     }
 
+    // ── PARQUEOS ──────────────────────────────────────────────────
     function renderParqueos() {
       const cont = document.getElementById('misParkings');
-      
-      if (misDatos.parqueos.length === 0) {
-        cont.innerHTML = `
-          <div style="text-align:center;padding:2rem;">
-            <i class="bi bi-inbox" style="font-size:2.5rem;color:var(--text-muted);margin-bottom:1rem;display:block;"></i>
-            <p style="color:var(--text-muted);">Aún no has publicado parqueos</p>
-            <a href="publish.html" class="btn btn-primary btn-sm">Publicar mi primer parqueo</a>
-          </div>
-        `;
+      if (!misDatos.parqueos.length) {
+        cont.innerHTML = `<div class="text-center py-5 text-muted"><i class="bi bi-inbox" style="font-size:2.5rem;display:block;margin-bottom:.75rem;"></i><p>Aún no has publicado parqueos</p><a href="publish.html" class="btn-main" style="display:inline-block;padding:.5rem 1.25rem;">Publicar parqueo</a></div>`;
         return;
       }
-
       cont.innerHTML = misDatos.parqueos.map(p => {
-        const reservasDelParqueo = misDatos.reservas.filter(r => r.parqueoId === p.id);
-        const rating = 4.5;
-        const reviews = 12;
-
+        const rsvCount = misDatos.reservas.filter(r => r.parking?.id === p.id || r.parking_id === p.id).length;
+        const estadoColor = p.estado === 'activo' ? '#2e7d32' : p.estado === 'pendiente_aprobacion' ? '#e65100' : '#c62828';
         return `
           <div class="parking-item">
             <div class="parking-info" style="flex:1;">
-              <h3><i class="bi bi-p-circle-fill icon-inline"></i>${p.nombre}</h3>
-              <p class="parking-meta">${p.direccion}</p>
-              <p class="parking-meta" style="margin-top:0.5rem;">
-                <span class="badge badge-primary">${p.tipo}</span>
-                <span style="margin-left:0.5rem;font-weight:600;">Q${p.precio}/día</span>
-              </p>
-              <p class="parking-meta" style="margin-top:0.75rem;">
-                <i class="bi bi-star-fill" style="color:#ffc107;"></i>
-                <strong>${rating}</strong> (${reviews} reseñas) · 
-                ${reservasDelParqueo.length} reservas
+              <h3><i class="bi bi-p-circle-fill icon-inline"></i>${esc(p.nombre)} ${p.is_featured ? '<i class="bi bi-star-fill" style="color:#D4AF37;" title="Destacado"></i>' : ''}</h3>
+              <p class="parking-meta">${esc(p.direccion||'')}</p>
+              <p class="parking-meta mt-1">
+                <span style="background:${estadoColor};color:#fff;padding:.15rem .5rem;border-radius:8px;font-size:.75rem;">${p.estado}</span>
+                <span class="ms-2 fw-bold">Q${p.precio_hora||'—'}/hr</span>
+                <span class="ms-2 text-muted">${rsvCount} reserva(s)</span>
               </p>
             </div>
             <div class="parking-actions">
-              <button class="btn btn-outline-primary btn-sm" onclick="editarParqueo(${p.id})">
-                <i class="bi bi-pencil"></i>Editar
-              </button>
-              <button class="btn btn-outline-info btn-sm" onclick="verReseñas(${p.id})">
-                <i class="bi bi-chat-dots"></i>Reseñas
-              </button>
+              <a href="parking-detail.html?id=${p.id}" class="btn btn-outline-primary btn-sm" target="_blank"><i class="bi bi-eye"></i></a>
             </div>
-          </div>
-        `;
+          </div>`;
       }).join('');
     }
 
+    // ── RESERVAS ──────────────────────────────────────────────────
     function renderReservas() {
       const cont = document.getElementById('misReservas');
-      
-      if (misDatos.reservas.length === 0) {
-        cont.innerHTML = `
-          <div style="text-align:center;padding:2rem;color:var(--text-muted);">
-            <i class="bi bi-inbox" style="font-size:2.5rem;margin-bottom:1rem;display:block;"></i>
-            No hay reservas aún
-          </div>
-        `;
+      if (!misDatos.reservas.length) {
+        cont.innerHTML = `<div class="text-center py-5 text-muted"><i class="bi bi-inbox" style="font-size:2.5rem;display:block;margin-bottom:.75rem;"></i><p>No hay reservas aún</p></div>`;
         return;
       }
-
       cont.innerHTML = misDatos.reservas.map(r => {
-        const estadoColor = {
-          'pendiente': '#fff9c4',
-          'confirmada': '#c8e6c9',
-          'finalizada': '#e0e0e0',
-          'cancelada': '#ffcdd2'
-        }[r.estado] || '#f5f5f5';
-
-        const estadoTexto = {
-          'pendiente': '⏳ Por confirmar',
-          'confirmada': '✓ Confirmada',
-          'finalizada': '✓ Finalizada',
-          'cancelada': '✗ Cancelada'
-        }[r.estado] || r.estado;
-
-        const fechaInicio = new Date(r.fechaInicio).toLocaleDateString('es-GT');
-        const fechaFin = new Date(r.fechaFin).toLocaleDateString('es-GT');
-
+        const estadoColors = { confirmada:'#c8e6c9', pendiente:'#fff9c4', finalizada:'#e0e0e0', cancelada:'#ffcdd2' };
+        const estadoLabels = { confirmada:'Confirmada', pendiente:'Por confirmar', finalizada:'Finalizada', cancelada:'Cancelada' };
+        const nomParqueo = r.parking?.nombre || '—';
+        const nomUsuario = r.usuario?.nombre || '—';
+        const usuarioId = r.usuario?.id || r.usuario_id;
+        const fmtD = d => d ? new Date(d).toLocaleDateString('es-GT') : '-';
         return `
-          <div style="position:relative;margin-bottom:1.5rem;padding-bottom:1.5rem;border-bottom:1px solid #e0e0e0;">
-            <div style="display:flex;justify-content:space-between;align-items:start;">
+          <div style="position:relative;margin-bottom:1.25rem;padding-bottom:1.25rem;border-bottom:1px solid #e5e7eb;">
+            <div style="display:flex;justify-content:space-between;align-items:start;gap:.5rem;">
               <div style="flex:1;">
-                <h3 style="margin:0 0 0.5rem 0;font-size:1.1rem;font-weight:700;">
-                  ${r.usuarioNombre}
-                </h3>
-                <p style="color:var(--text-muted);font-size:0.9rem;margin:0 0 0.5rem 0;">
-                  <strong>${r.parqueoNombre}</strong> · ${fechaInicio} a ${fechaFin}
-                </p>
-                <p style="color:var(--text-muted);font-size:0.85rem;margin:0;">
-                  Ingresos: <strong style="color:var(--primary);">Q${r.precio}</strong>
-                </p>
+                <div class="fw-bold">${esc(nomUsuario)}</div>
+                <small class="text-muted d-block"><b>${esc(nomParqueo)}</b> · ${fmtD(r.fecha_inicio)} – ${fmtD(r.fecha_fin)}</small>
+                <small class="text-muted">Q${r.precio_total||0} · ${r.tipo||'hora'} · <code style="font-size:.75rem;">${r.codigo_reserva||''}</code></small>
               </div>
-              <div style="background:${estadoColor};padding:0.5rem 1rem;border-radius:20px;font-size:0.85rem;font-weight:600;">
-                ${estadoTexto}
-              </div>
+              <span style="background:${estadoColors[r.estado]||'#f3f4f6'};padding:.3rem .7rem;border-radius:12px;font-size:.78rem;font-weight:600;white-space:nowrap;">${estadoLabels[r.estado]||r.estado}</span>
             </div>
-            <div style="margin-top:1rem;display:flex;gap:0.5rem;">
+            <div style="margin-top:.75rem;display:flex;gap:.5rem;flex-wrap:wrap;">
               ${r.estado === 'pendiente' ? `
-                <button class="btn btn-success btn-sm" onclick="confirmarReserva(${r.id})">
-                  <i class="bi bi-check"></i>Confirmar
-                </button>
-                <button class="btn btn-outline-danger btn-sm" onclick="rechazarReserva(${r.id})">
-                  <i class="bi bi-x"></i>Rechazar
-                </button>
-              ` : ''}
-              <button class="btn btn-outline-info btn-sm" onclick="contactarVisitante('${r.usuarioNombre}', ${r.usuarioId})">
-                <i class="bi bi-chat-dots"></i>Mensaje
-              </button>
+                <button class="btn btn-success btn-sm" onclick="cambiarEstadoReserva('${r.id}','confirmada')"><i class="bi bi-check"></i> Confirmar</button>
+                <button class="btn btn-outline-danger btn-sm" onclick="cambiarEstadoReserva('${r.id}','cancelada')"><i class="bi bi-x"></i> Rechazar</button>` : ''}
+              <button class="btn btn-outline-secondary btn-sm" onclick="window.location.href='messages.html?chat=${usuarioId}'"><i class="bi bi-chat-dots"></i> Mensaje</button>
             </div>
-          </div>
-        `;
+          </div>`;
       }).join('');
     }
 
+    async function cambiarEstadoReserva(id, estado) {
+      const { error } = await window.rdpSupabase.updateReservationStatus(id, estado);
+      if (error) { alert('Error: ' + error.message); return; }
+      cargarDatos();
+    }
+
+    // ── STATS ─────────────────────────────────────────────────────
     function actualizarStats() {
-      // Calcular ganancias
-      const ingresoTotal = misDatos.reservas
-        .filter(r => r.estado === 'confirmada' || r.estado === 'finalizada')
-        .reduce((sum, r) => sum + (r.precio || 0), 0);
-
-      const ingresoMes = misDatos.reservas
-        .filter(r => {
-          const fecha = new Date(r.fechaInicio);
-          const ahora = new Date();
-          return fecha.getMonth() === ahora.getMonth() && 
-                 fecha.getFullYear() === ahora.getFullYear() &&
-                 (r.estado === 'confirmada' || r.estado === 'finalizada');
-        })
-        .reduce((sum, r) => sum + (r.precio || 0), 0);
-
+      const cobradas = misDatos.reservas.filter(r => r.estado === 'confirmada' || r.estado === 'finalizada');
+      const ahora = new Date();
+      const ingresoTotal = cobradas.reduce((s, r) => s + Number(r.precio_total||0), 0);
+      const ingresoMes = cobradas.filter(r => {
+        const f = new Date(r.fecha_inicio);
+        return f.getMonth() === ahora.getMonth() && f.getFullYear() === ahora.getFullYear();
+      }).reduce((s, r) => s + Number(r.precio_total||0), 0);
       document.getElementById('totalEarnings').textContent = `Q ${ingresoTotal.toLocaleString('es-GT', { minimumFractionDigits: 2 })}`;
       document.getElementById('monthEarnings').textContent = `Q ${ingresoMes.toLocaleString('es-GT', { minimumFractionDigits: 2 })}`;
       document.getElementById('statParqueos').textContent = misDatos.parqueos.length;
       document.getElementById('statReservas').textContent = misDatos.reservas.filter(r => r.estado === 'pendiente').length;
     }
 
-    function confirmarReserva(id) {
-      fetch(`/api/admin/reservations/${id}`, {
-        method: 'PUT',
-        headers: getHeaders(),
-        body: JSON.stringify({ estado: 'confirmada' })
-      })
-        .then(r => r.json())
-        .then(resp => {
-          if (resp.success) {
-            alert('✓ Reserva confirmada');
-            location.reload();
-          }
-        })
-        .catch(e => alert('Error: ' + e));
+    // ── MEMBRESÍA ─────────────────────────────────────────────────
+    async function cargarMembresia() {
+      if (!window.rdpSupabase?.isConfigured) return;
+      const { data: m } = await window.rdpSupabase.getHostMembership(hostUser.id);
+      if (m) {
+        const labels = { basica: 'Básico', premium: 'Premium', enterprise: 'Negocios' };
+        document.getElementById('planNombre').textContent = `${m.tipo === 'premium' ? '★ ' : ''}${labels[m.tipo] || m.tipo}`;
+        document.getElementById('planVigencia').textContent = `Vigente hasta: ${new Date(m.fecha_fin).toLocaleDateString('es-GT')}`;
+      }
     }
 
-    function rechazarReserva(id) {
-      if (!confirm('¿Rechazar esta reserva?')) return;
-      fetch(`/api/admin/reservations/${id}`, {
-        method: 'PUT',
-        headers: getHeaders(),
-        body: JSON.stringify({ estado: 'cancelada' })
-      })
-        .then(r => r.json())
-        .then(resp => {
-          if (resp.success) {
-            alert('Reserva rechazada');
-            location.reload();
-          }
-        })
-        .catch(e => alert('Error: ' + e));
+    async function solicitarPremium() {
+      const desc = `[SOLICITUD_PREMIUM] Anfitrión ${hostUser.nombre} (${hostUser.id}) solicita plan Premium (Q200/mes). Contactar para confirmar pago.`;
+      const { error } = await window.rdpSupabase.createIncident(hostUser.id, null, desc);
+      if (error) { alert('Error al enviar solicitud: ' + error.message); return; }
+      alert('Solicitud enviada. El equipo de RDP te contactará en 24 horas para confirmar el pago y activar tu plan.');
     }
 
-    function contactarVisitante(nombre, usuarioId) {
-      window.location.href = `messages.html?contact=${usuarioId}`;
+    async function solicitarNegocios() {
+      const desc = `[SOLICITUD_NEGOCIOS] Anfitrión ${hostUser.nombre} (${hostUser.id}) solicita plan Negocios (Q500/mes). Requiere contacto de ventas.`;
+      const { error } = await window.rdpSupabase.createIncident(hostUser.id, null, desc);
+      if (error) { alert('Error: ' + error.message); return; }
+      alert('Solicitud enviada. Un agente de ventas te contactará pronto.');
     }
 
-    function editarParqueo(id) {
-      alert('Editar parqueo #' + id + ' (próximamente)');
+    // ── DESTACAR PARQUEO ──────────────────────────────────────────
+    function poblarSelectDestacar() {
+      const sel = document.getElementById('selectParqueoDestacar');
+      sel.innerHTML = '<option value="">-- Selecciona --</option>';
+      misDatos.parqueos.filter(p => p.estado === 'activo').forEach(p => {
+        const opt = document.createElement('option');
+        opt.value = p.id;
+        opt.textContent = p.nombre;
+        sel.appendChild(opt);
+      });
     }
 
-    function verReseñas(id) {
-      // Mostrar modal con reseñas mock
-      const modal = document.createElement('div');
-      modal.className = 'modal fade';
-      modal.innerHTML = `
-        <div class="modal-dialog">
-          <div class="modal-content">
-            <div class="modal-header">
-              <h5 class="modal-title"><i class="bi bi-star-fill"></i> Reseñas</h5>
-              <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
-            </div>
-            <div class="modal-body">
-              <div style="margin-bottom:1.5rem;">
-                <p style="text-align:center;margin:0;">
-                  <i class="bi bi-star-fill" style="color:#ffc107;font-size:1.5rem;"></i>
-                  <span style="font-size:1.8rem;font-weight:700;">4.5</span>
-                </p>
-                <p style="text-align:center;color:var(--text-muted);font-size:0.9rem;">Basado en 12 reseñas</p>
-              </div>
-              
-              ${[
-                { user: 'Juan M.', rating: 5, text: 'Parqueo excelente, muy seguro y bien ubicado' },
-                { user: 'María G.', rating: 4, text: 'Buena ubicación, pero un poco estrecho' },
-                { user: 'Pedro L.', rating: 5, text: '¡Perfecto! Volveré con seguridad' }
-              ].map(r => `
-                <div style="border-bottom:1px solid #e0e0e0;padding-bottom:1rem;margin-bottom:1rem;">
-                  <div style="display:flex;justify-content:space-between;align-items:start;">
-                    <strong>${r.user}</strong>
-                    <span style="color:#ffc107;font-size:.8rem;">${'<i class="bi bi-star-fill"></i>'.repeat(r.rating)}${'<i class="bi bi-star"></i>'.repeat(5-r.rating)}</span>
-                  </div>
-                  <p style="color:var(--text-muted);margin:0.5rem 0 0 0;font-size:0.9rem;">${r.text}</p>
-                </div>
-              `).join('')}
-            </div>
-          </div>
-        </div>
-      `;
-      document.body.appendChild(modal);
-      new bootstrap.Modal(modal).show();
-      modal.addEventListener('hidden.bs.modal', () => modal.remove());
+    function calcularCostoDestacado() {
+      const desde = document.getElementById('destacarDesde').value;
+      const hasta = document.getElementById('destacarHasta').value;
+      if (!desde || !hasta) return;
+      const dias = Math.max(1, Math.ceil((new Date(hasta) - new Date(desde)) / (1000*3600*24)));
+      const semanas = Math.ceil(dias / 7);
+      const costo = semanas * 50;
+      document.getElementById('costoDestacado').textContent = `Q${costo}`;
+      document.getElementById('precioDestacado').style.display = '';
     }
 
+    document.getElementById('selectParqueoDestacar')?.addEventListener('change', calcularCostoDestacado);
+
+    async function solicitarDestacado() {
+      const parkId = document.getElementById('selectParqueoDestacar').value;
+      const desde = document.getElementById('destacarDesde').value;
+      const hasta = document.getElementById('destacarHasta').value;
+      if (!parkId) { alert('Selecciona un parqueo'); return; }
+      if (!desde || !hasta || hasta < desde) { alert('Selecciona fechas válidas'); return; }
+      const park = misDatos.parqueos.find(p => p.id === parkId);
+      const dias = Math.ceil((new Date(hasta) - new Date(desde)) / (1000*3600*24));
+      const costo = Math.ceil(dias / 7) * 50;
+      const desc = `[SOLICITUD_DESTACADO] Anfitrión ${hostUser.nombre} (${hostUser.id}) solicita destacar "${park?.nombre}" (ID: ${parkId}) del ${desde} al ${hasta}. Costo estimado: Q${costo}. Confirmar pago para activar.`;
+      const { error } = await window.rdpSupabase.createIncident(hostUser.id, parkId, desc);
+      if (error) { alert('Error: ' + error.message); return; }
+      alert(`¡Solicitud enviada! Tu parqueo "${park?.nombre}" será destacado del ${desde} al ${hasta} (Q${costo}) una vez confirmado el pago por RDP.`);
+    }
+
+    // ── HELPERS ───────────────────────────────────────────────────
     function toggleDarkMode() {
       document.body.classList.toggle('dark-mode');
       localStorage.setItem('darkMode', document.body.classList.contains('dark-mode'));
     }
 
-    async function activarPremium() {
-      const user = getUser();
-      if (!user) return;
-      if (window.rdpSupabase && window.rdpSupabase.isConfigured) {
-        const client = window.rdpSupabase.getClient();
-        const fechaInicio = new Date().toISOString();
-        const fechaFin = new Date(Date.now() + 30*24*3600*1000).toISOString();
-        const { error } = await client.from('memberships').insert({
-          anfitrion_id: user.id,
-          tipo: 'premium',
-          precio: 200,
-          fecha_inicio: new Date().toISOString().split('T')[0],
-          fecha_fin: new Date(Date.now() + 30*24*3600*1000).toISOString().split('T')[0],
-          estado: 'activa'
-        });
-        if (error) { alert('Error al activar: ' + error.message); return; }
-        document.getElementById('planNombre').textContent = '⭐ Premium';
-        document.getElementById('planVigencia').textContent = `Vigente hasta: ${new Date(fechaFin).toLocaleDateString('es-GT')}`;
-        alert('¡Plan Premium activado! Tu parqueo aparecerá destacado en las búsquedas.');
-      } else {
-        alert('Para activar Premium contacta a RDP S.A. o aplica el schema de base de datos.');
-      }
-    }
-
-    // Cargar dark mode setting
-    if (localStorage.getItem('darkMode') === 'true') {
-      document.body.classList.add('dark-mode');
+    function esc(s) {
+      return String(s || '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
     }
   </script>
 </body>
