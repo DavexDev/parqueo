@@ -122,6 +122,18 @@
     return client.from('profiles').update(updates).eq('id', userId).select().single();
   }
 
+  // Upsert: crea el perfil si no existe, actualiza si existe.
+  // Requiere pasar nombre + email para cumplir NOT NULL del schema.
+  async function ensureProfile(userId, { nombre, email, rol = 'visitante' }) {
+    const client = getClient();
+    if (!client) return { data: null, error: { message: 'Supabase no configurado' } };
+    return client
+      .from('profiles')
+      .upsert({ id: userId, nombre, email, rol }, { onConflict: 'id', ignoreDuplicates: false })
+      .select()
+      .single();
+  }
+
   // ── Parqueos ─────────────────────────────────────────────────
 
   async function getParkings(filters = {}) {
@@ -456,6 +468,7 @@
     // Profile
     getProfile,
     updateProfile,
+    ensureProfile,
     // Parkings
     getParkings,
     getParkingById,

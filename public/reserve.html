@@ -346,6 +346,12 @@
 
         let reserva;
         if (window.rdpSupabase && window.rdpSupabase.isConfigured) {
+          // Garantizar que el perfil exista (guard FK reservations_usuario_id_fkey)
+          await window.rdpSupabase.ensureProfile(user.id, {
+            nombre: user.nombre || user.email,
+            email:  user.email,
+            rol:    user.rol || 'visitante'
+          });
           const { data, error } = await window.rdpSupabase.createReservation(reservationData);
           if (error) throw new Error(error.message);
           reserva = data;

@@ -196,8 +196,8 @@
       const user = session.user;
       const nombre = user.user_metadata?.full_name || user.user_metadata?.name || user.email.split('@')[0];
 
-      // Actualizar perfil con el rol elegido y el nombre real de Google
-      await window.rdpSupabase.updateProfile(user.id, { rol, nombre });
+      // Upsert: crea el perfil si el trigger no lo hizo, o actualiza el rol/nombre si ya existe
+      await window.rdpSupabase.ensureProfile(user.id, { nombre, email: user.email, rol });
 
       // Volver a leer el perfil actualizado
       const { data: profile } = await window.rdpSupabase.getProfile(user.id);
