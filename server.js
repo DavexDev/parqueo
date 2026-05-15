@@ -4,6 +4,7 @@
 require('dotenv').config();
 
 const express = require('express');
+const path    = require('path');
 const { Resend } = require('resend');
 const { testConnection, hasDatabaseConfig } = require('./config/database');
 const { generateToken, verifyToken, requireRole } = require('./src/middleware/auth');
@@ -20,7 +21,7 @@ const RESEND_API_KEY = process.env.RESEND_API_KEY || 're_demo_key';
 const resend = new Resend(RESEND_API_KEY);
 
 app.use(express.json());
-app.use(express.static('public'));
+app.use(express.static(path.join(__dirname, 'public')));
 
 function sanitizeUser(user) {
   if (!user) return null;
