@@ -54,7 +54,7 @@
 
     <!-- Tutorial link -->
     <div class="text-center mt-3" style="padding-top:1rem;border-top:1px solid var(--border);">
-      <a href="tutorial.html" class="btn btn-sm btn-outline-secondary" style="border-radius:20px;font-size:0.82rem;">
+      <a href="tutorial.html" id="rdp-tutorial-btn" class="btn btn-sm btn-outline-secondary" style="border-radius:20px;font-size:0.82rem;">
         <i class="bi bi-book-fill"></i> Cómo funciona RDP
       </a>
     </div>
@@ -86,6 +86,14 @@
       renderNavbar();
       renderBottomBar('home');
       const user = getUser();
+      // Conectar botón "Cómo funciona" al tutorial interactivo cuando hay sesión
+      const _tutBtn = document.getElementById('rdp-tutorial-btn');
+      if (_tutBtn && user && window.rdpTutorial) {
+        _tutBtn.addEventListener('click', (e) => {
+          e.preventDefault();
+          window.rdpTutorial.show(user.rol);
+        });
+      }
       const cont = document.getElementById('botonesNav');
 
       // Botones por rol
