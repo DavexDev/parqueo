@@ -270,6 +270,9 @@
 
     // ── DATOS ─────────────────────────────────────────────────────
     async function cargarDatos() {
+      if (window.rdpSupabase?.isConfigured) {
+        await window.rdpSupabase.autoFinalizarVencidas().catch(() => {});
+      }
       const [parkRes, resRes] = await Promise.all([
         window.rdpSupabase.getHostParkings(hostUser.id),
         window.rdpSupabase.getHostReservations(hostUser.id)
@@ -338,7 +341,9 @@
             <div style="margin-top:.75rem;display:flex;gap:.5rem;flex-wrap:wrap;">
               ${r.estado === 'pendiente' ? `
                 <button class="btn btn-success btn-sm" onclick="cambiarEstadoReserva('${r.id}','confirmada')"><i class="bi bi-check"></i> Confirmar</button>
-                <button class="btn btn-outline-danger btn-sm" onclick="cambiarEstadoReserva('${r.id}','cancelada')"><i class="bi bi-x"></i> Rechazar</button>` : ''}
+                <button class="btn btn-outline-danger btn-sm" onclick="cambiarEstadoReserva('${r.id}','cancelada')"><i class="bi bi-x"></i> Rechazar</button>` : r.estado === 'confirmada' ? `
+                <button class="btn btn-outline-secondary btn-sm" onclick="cambiarEstadoReserva('${r.id}','finalizada')"><i class="bi bi-check-all"></i> Finalizar</button>
+                <button class="btn btn-outline-danger btn-sm" onclick="cambiarEstadoReserva('${r.id}','cancelada')"><i class="bi bi-x"></i> Cancelar</button>` : ''}
               <button class="btn btn-outline-secondary btn-sm" onclick="window.location.href='messages.html?chat=${usuarioId}'"><i class="bi bi-chat-dots"></i> Mensaje</button>
             </div>
           </div>`;
@@ -353,9 +358,11 @@
       const visitanteId = reserva?.usuario?.id || reserva?.usuario_id;
       if (window.rdpPush && visitanteId) {
         const nomParqueo = reserva?.parking?.nombre || 'tu parqueo';
+        const parkingId = reserva?.parking?.id || reserva?.parking_id || '';
         const msgs = {
-          confirmada: { t: 'Reserva confirmada', b: `Tu reserva en ${nomParqueo} fue confirmada.`, u: 'reservations.html' },
-          cancelada:  { t: 'Reserva cancelada',  b: `Tu reserva en ${nomParqueo} fue cancelada.`,  u: 'reservations.html' }
+          confirmada: { t: 'Reserva confirmada',  b: `Tu reserva en ${nomParqueo} fue confirmada.`,    u: 'reservations.html' },
+          cancelada:  { t: 'Reserva cancelada',   b: `Tu reserva en ${nomParqueo} fue cancelada.`,     u: 'reservations.html' },
+          finalizada: { t: 'Reserva finalizada',  b: `Tu visita a ${nomParqueo} ha concluido. \u00bfC\u00f3mo fue tu experiencia? Puedes dejar una rese\u00f1a.`, u: `reviews.html?id=${parkingId}&reserva=${id}` }
         };
         const m = msgs[estado];
         if (m) window.rdpPush.notify(visitanteId, m.t, m.b, m.u).catch(() => {});

@@ -343,6 +343,12 @@
     return client.from('reservations').update({ estado, ...extra }).eq('id', id).select().single();
   }
 
+  async function autoFinalizarVencidas() {
+    const client = getClient();
+    if (!client) return { data: 0, error: null };
+    return client.rpc('auto_finalizar_vencidas');
+  }
+
   // ── Reseñas ──────────────────────────────────────────────────
 
   async function getParkingRatings(parkingId) {
@@ -484,6 +490,7 @@
     getUserReservations,
     getHostReservations,
     updateReservationStatus,
+    autoFinalizarVencidas,
     // Admin
     getAdminMetrics,
     getAdminUsers,

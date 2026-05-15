@@ -440,6 +440,23 @@ CREATE TRIGGER trg_reserva_estado
   AFTER UPDATE OF estado ON reservations
   FOR EACH ROW EXECUTE FUNCTION calculate_commission();
 
+-- Finalizar automáticamente reservas vencidas (llamada desde cliente o pg_cron)
+CREATE OR REPLACE FUNCTION auto_finalizar_vencidas()
+RETURNS int LANGUAGE plpgsql SECURITY DEFINER
+SET search_path = public
+AS $$
+DECLARE cnt int;
+BEGIN
+  UPDATE reservations
+    SET estado = 'finalizada'
+  WHERE estado = 'confirmada'
+    AND fecha_fin < NOW() - INTERVAL '15 minutes';
+  GET DIAGNOSTICS cnt = ROW_COUNT;
+  RETURN cnt;
+END;
+$$;
+GRANT EXECUTE ON FUNCTION auto_finalizar_vencidas() TO authenticated;
+
 -- Actualizar calificación promedio del parqueo
 CREATE OR REPLACE FUNCTION update_parking_rating()
 RETURNS TRIGGER LANGUAGE plpgsql AS $$
