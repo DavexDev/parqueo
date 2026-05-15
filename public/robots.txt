@@ -1,0 +1,96 @@
+# robots.txt — Parqueos Esquipulas
+# © 2026 DavexDev — Todos los derechos reservados.
+# Este sitio es software propietario. Queda prohibido el uso del contenido
+# para entrenar modelos de inteligencia artificial o cualquier uso no autorizado.
+
+# --- Bloqueo de bots de IA (entrenamiento y scraping) ---
+
+# OpenAI
+User-agent: GPTBot
+Disallow: /
+
+User-agent: ChatGPT-User
+Disallow: /
+
+User-agent: OAI-SearchBot
+Disallow: /
+
+# Anthropic / Claude
+User-agent: anthropic-ai
+Disallow: /
+
+User-agent: ClaudeBot
+Disallow: /
+
+User-agent: Claude-Web
+Disallow: /
+
+# Google AI (Gemini / Bard training)
+User-agent: Google-Extended
+Disallow: /
+
+# Meta AI
+User-agent: FacebookBot
+Disallow: /
+
+User-agent: Meta-ExternalAgent
+Disallow: /
+
+# Common Crawl (dataset de entrenamiento de IA)
+User-agent: CCBot
+Disallow: /
+
+# Perplexity AI
+User-agent: PerplexityBot
+Disallow: /
+
+# Cohere
+User-agent: cohere-ai
+Disallow: /
+
+# Bytedance / TikTok
+User-agent: Bytespider
+Disallow: /
+
+# Diffbot
+User-agent: Diffbot
+Disallow: /
+
+# You.com
+User-agent: YouBot
+Disallow: /
+
+# Omgili
+User-agent: omgilibot
+Disallow: /
+
+User-agent: Omgili
+Disallow: /
+
+# ImagesiftBot
+User-agent: ImagesiftBot
+Disallow: /
+
+# Amazon Alexa
+User-agent: Amazonbot
+Disallow: /
+
+# Apple
+User-agent: Applebot-Extended
+Disallow: /
+
+# Generic AI scrapers
+User-agent: DataForSeoBot
+Disallow: /
+
+User-agent: PetalBot
+Disallow: /
+
+# --- Crawlers web generales: acceso limitado ---
+User-agent: *
+Disallow: /api/
+Disallow: /db/
+Allow: /
+
+# --- Sitemap ---
+Sitemap: https://parqueo-beryl.vercel.app/sitemap.xml

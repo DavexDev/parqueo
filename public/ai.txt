@@ -1,0 +1,35 @@
+# ai.txt — AI Usage Policy
+# Parqueos Esquipulas | © 2026 DavexDev
+# Referencia: https://site-policy.github.com/ai-usage-policy/
+
+# Este archivo declara explicitamente la politica de uso de IA para este sitio.
+
+# Prohibiciones
+Allow-AI-Training: false
+Allow-AI-Scraping: false
+Allow-AI-Indexing: false
+Allow-Code-Training: false
+
+# Detalles
+Project: Parqueos Esquipulas
+Owner: DavexDev
+Copyright: © 2026 DavexDev — Todos los derechos reservados
+License: Proprietary — All Rights Reserved
+Contact: https://github.com/DavexDev
+
+# Declaracion
+# El codigo fuente, diseno, estructura de base de datos, logica de negocio e
+# interfaces de este proyecto NO pueden ser usados para entrenar, ajustar
+# (fine-tune) ni alimentar ningun modelo de inteligencia artificial, sistema
+# de aprendizaje automatico, dataset publico o privado, ni ninguna herramienta
+# de generacion de codigo sin autorizacion escrita previa del autor.
+#
+# Esto incluye pero no se limita a:
+# - Modelos de lenguaje (LLM): GPT, Claude, Gemini, Llama, Mistral, etc.
+# - Herramientas de completado de codigo: GitHub Copilot, Cursor, Tabnine, etc.
+# - Datasets de entrenamiento: Common Crawl, The Pile, RedPajama, etc.
+# - Web scrapers con fines de IA: GPTBot, CCBot, ClaudeBot, etc.
+#
+# El incumplimiento constituye una violacion de derechos de propiedad intelectual
+# sujeta a acciones legales conforme a la Ley de Derechos de Autor de Guatemala
+# (Decreto 33-98) y el DMCA.

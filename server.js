@@ -1,4 +1,6 @@
 // server.js
+// SPDX-License-Identifier: LicenseRef-Proprietary
+// SPDX-FileCopyrightText: 2026 DavexDev
 // =============================================================================
 // © 2026 DavexDev — Parqueos Esquipulas, Guatemala.
 // CODIGO PROPIETARIO — Todos los derechos reservados.
