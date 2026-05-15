@@ -227,7 +227,7 @@
         capacidad: parseInt(document.getElementById('capacidad').value) || null,
         nivel_seguridad: parseInt(document.getElementById('nivel_seguridad').value) || 3,
         reglas: document.getElementById('reglas').value.trim() || null,
-        estado: 'activo'
+        estado: 'pendiente_aprobacion'
       };
 
       try {
@@ -285,7 +285,7 @@
           parkingId = data.parqueo?.id;
         }
 
-        showEstado('<i class="bi bi-check-circle-fill icon-inline"></i>Parqueo publicado correctamente. <a href="parkings.html">Ver parqueos</a>', 'success');
+        showEstado('<i class="bi bi-hourglass-split icon-inline"></i>Parqueo enviado para revisión. El equipo de RDP lo aprobará en breve. <a href="host-dashboard.html">Ver mis parqueos</a>', 'success');
         document.getElementById('formPublicar').reset();
         document.getElementById('fotosPreview').innerHTML = '';
         if (pickMarker) { pickMap.removeLayer(pickMarker); pickMarker = null; }

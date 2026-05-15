@@ -174,7 +174,8 @@
   <script src="app.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
   <script>
-    let adminUser = null, rechazarId = null;
+    let adminUser = null, rechazarId = null, rechazarAnfitrionId = null;
+    let pendientesData = [];
 
     document.addEventListener('DOMContentLoaded', () => {
       adminUser = requireLogin(['admin']);
@@ -271,6 +272,7 @@
         cont.innerHTML = '<div class="text-center py-5"><i class="bi bi-check-circle" style="font-size:2rem;color:#2e7d32;"></i><p class="mt-2 text-muted">No hay parqueos pendientes</p></div>';
         return;
       }
+      pendientesData = pendientes;
       pendientes.forEach(p => {
         const precio = p.precio_hora ?? p.precio;
         const tipos = Array.isArray(p.tipos_vehiculo) ? p.tipos_vehiculo.join(', ') : '—';
@@ -297,13 +299,19 @@
 
     async function aprobar(id) {
       if (!await rdpConfirm('¿Aprobar este parqueo? Quedará visible para todos los usuarios.', 'Aprobar')) return;
+      const park = pendientesData.find(p => p.id === id);
       const { error } = await window.rdpSupabase.approveParking(id, adminUser.id);
       if (error) { rdpAlert('No se pudo aprobar el parqueo. Intenta nuevamente.', 'error'); return; }
+      if (window.rdpPush && park?.anfitrion_id) {
+        window.rdpPush.notify(park.anfitrion_id, 'Parqueo aprobado', `Tu parqueo "${park.nombre}" fue aprobado y ya está visible para los visitantes.`, 'host-dashboard.html').catch(() => {});
+      }
+      rdpAlert(`Parqueo "${park?.nombre || ''}" aprobado correctamente.`, 'success');
       cargarPendientes(); cargarParqueos(); cargarMetricas();
     }
 
     function iniciarRechazo(id) {
       rechazarId = id;
+      rechazarAnfitrionId = pendientesData.find(p => p.id === id)?.anfitrion_id || null;
       document.getElementById('motivoRechazo').value = '';
       new bootstrap.Modal(document.getElementById('modalRechazo')).show();
     }
@@ -311,10 +319,14 @@
     async function confirmarRechazo() {
       const motivo = document.getElementById('motivoRechazo').value.trim();
       if (!motivo) { rdpAlert('Escribe el motivo del rechazo antes de continuar.', 'warning'); return; }
+      const park = pendientesData.find(p => p.id === rechazarId);
       const { error } = await window.rdpSupabase.rejectParking(rechazarId, motivo);
       if (error) { rdpAlert('No se pudo rechazar el parqueo. Intenta nuevamente.', 'error'); return; }
+      if (window.rdpPush && rechazarAnfitrionId) {
+        window.rdpPush.notify(rechazarAnfitrionId, 'Parqueo no aprobado', `Tu parqueo "${park?.nombre || ''}" no fue aprobado. Motivo: ${motivo}`, 'host-dashboard.html').catch(() => {});
+      }
       bootstrap.Modal.getInstance(document.getElementById('modalRechazo')).hide();
-      rechazarId = null;
+      rechazarId = null; rechazarAnfitrionId = null;
       cargarPendientes(); cargarParqueos(); cargarMetricas();
     }
 
