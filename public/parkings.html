@@ -30,6 +30,10 @@
     .filtro-chip.active { background:var(--rdp-navy); color:#fff; border-color:var(--rdp-navy); }
     .filtros-scroll { display:flex; gap:8px; overflow-x:auto; padding-bottom:4px; scrollbar-width:none; }
     .filtros-scroll::-webkit-scrollbar { display:none; }
+    .map-popup-actions { display:flex; gap:6px; margin-top:8px; }
+    .map-popup-actions a { flex:1; text-align:center; padding:4px 8px; border-radius:8px; text-decoration:none; font-size:0.78rem; font-weight:600; }
+    .map-popup-btn-reservar { background:#0F172A; color:#D4AF37; }
+    .map-popup-btn-ruta     { background:#f3f4f6; color:#374151; }
   </style>
 </head>
 <body>
@@ -71,9 +75,9 @@
 
     <!-- Toggle mapa -->
     <button id="btnMapa" class="btn-ghost mb-3" style="width:100%;" onclick="toggleMap()">
-      <i class="bi bi-map icon-inline"></i>Ver en mapa
+      <i class="bi bi-list-check icon-inline"></i>Ver lista
     </button>
-    <div id="map" style="display:none;"></div>
+    <div id="map"></div>
 
     <div id="contador" class="text-muted mb-2" style="font-size:0.85rem;"></div>
     <div id="listaParqueos"></div>
@@ -84,25 +88,23 @@
   <script src="lib/supabase-client.js"></script>
   <script src="app.js"></script>
   <script>
-    let map = null, markersLayer = [], userLocation = null, allParkings = [], tipoActivo = '';
+    let map = null, markersLayer = {}, routeLine = null, userLocation = null, allParkings = [], tipoActivo = '', focusedId = null;
 
     document.addEventListener('DOMContentLoaded', () => {
       renderNavbar();
       renderBottomBar('parkings');
       if (navigator.geolocation) {
-        navigator.geolocation.getCurrentPosition(pos => {
-          userLocation = { lat: pos.coords.latitude, lng: pos.coords.longitude };
-          cargarParqueos();
-        }, () => cargarParqueos());
+        navigator.geolocation.getCurrentPosition(
+          pos => { userLocation = { lat: pos.coords.latitude, lng: pos.coords.longitude }; cargarParqueos(); },
+          () => cargarParqueos()
+        );
       } else { cargarParqueos(); }
       document.getElementById('busqueda').addEventListener('keydown', e => { if (e.key === 'Enter') cargarParqueos(); });
     });
 
     function setTipo(btn, tipo) {
       document.querySelectorAll('.filtro-chip').forEach(b => b.classList.remove('active'));
-      btn.classList.add('active');
-      tipoActivo = tipo;
-      cargarParqueos();
+      btn.classList.add('active'); tipoActivo = tipo; cargarParqueos();
     }
 
     async function cargarParqueos() {
@@ -120,22 +122,18 @@
         const { data } = await window.rdpSupabase.getParkings(filters);
         parqueos = data || [];
       } else {
-        let url = '/api/parkings';
-        if (userLocation && radio) url = `/api/parkings/near?lat=${userLocation.lat}&lng=${userLocation.lng}&radius=${radio}`;
+        const url = (userLocation && radio) ? `/api/parkings/near?lat=${userLocation.lat}&lng=${userLocation.lng}&radius=${radio}` : '/api/parkings';
         const r = await fetch(url);
         parqueos = await r.json();
         if (!Array.isArray(parqueos)) parqueos = [];
       }
 
-      // Filtro tipo vehículo client-side
       if (tipoActivo) {
         parqueos = parqueos.filter(p => {
           const tipos = Array.isArray(p.tipos_vehiculo) ? p.tipos_vehiculo : (p.tipo ? [p.tipo] : []);
           return tipos.some(t => t && t.toLowerCase().includes(tipoActivo.toLowerCase()));
         });
       }
-
-      // Calcular distancia
       if (userLocation) {
         parqueos = parqueos.map(p => ({ ...p, distance: (p.lat && p.lng) ? calcDist(userLocation.lat, userLocation.lng, p.lat, p.lng) : null }));
         if (radio) parqueos = parqueos.filter(p => p.distance == null || p.distance <= radio);
@@ -144,53 +142,62 @@
 
       allParkings = parqueos;
       document.getElementById('contador').textContent = `${parqueos.length} parqueo${parqueos.length !== 1 ? 's' : ''} encontrado${parqueos.length !== 1 ? 's' : ''}`;
-
       cont.innerHTML = '';
       if (parqueos.length === 0) {
         cont.innerHTML = '<div class="text-center text-muted py-5"><i class="bi bi-search" style="font-size:2.5rem;opacity:.3;"></i><p class="mt-2">No hay parqueos disponibles</p></div>';
         return;
       }
       parqueos.forEach(p => renderCard(p, cont));
-      if (map && document.getElementById('map').style.display !== 'none') actualizarMarcadores();
+      if (!map) initMap(); else actualizarMarcadores();
     }
 
-    function tipoIcono(tipo) {
-      const m = { moto:'bi-bicycle', carro:'bi-car-front-fill', pickup:'bi-truck', microbus:'bi-bus-front-fill', camioneta:'bi-truck-flatbed', bicicleta:'bi-bicycle' };
-      return m[(tipo||'').toLowerCase()] || 'bi-car-front-fill';
+    // ── MAPA INTERACTIVO ──────────────────────────────────────────
+    function createMarkerIcon(p, active) {
+      const precio = p.precio_hora ?? p.precio;
+      return L.divIcon({
+        className: '',
+        html: `<div class="rdp-price-badge${active ? ' rdp-price-badge--active' : ''}">${precio != null ? 'Q' + precio : '●'}</div>`,
+        iconSize: null, iconAnchor: [30, 14]
+      });
     }
 
-    function renderCard(p, cont) {
-      const tipos = Array.isArray(p.tipos_vehiculo) ? p.tipos_vehiculo : (p.tipo ? [p.tipo] : []);
-      const tiposHtml = tipos.map(t => `<span class="tipo-chip"><i class="bi ${tipoIcono(t)}"></i> ${t}</span>`).join('');
-      const distHtml = p.distance != null ? `<small class="text-muted"><i class="bi bi-geo-alt"></i> ${p.distance.toFixed(1)} km</small>` : '';
-      const estrellas = p.calificacion_promedio ? `<span class="stars">${'<i class="bi bi-star-fill" style="color:#ffc107;font-size:.8rem;"></i>'.repeat(Math.round(p.calificacion_promedio))}${'<i class="bi bi-star" style="color:#ffc107;font-size:.8rem;"></i>'.repeat(5-Math.round(p.calificacion_promedio))}</span>` : '';
-      const fotoHtml = p.foto_principal
-        ? `<img src="${p.foto_principal}" alt="${p.nombre}" style="width:100%;height:140px;object-fit:cover;border-radius:12px 12px 0 0;">`
-        : `<div class="parking-foto-placeholder"><i class="bi bi-car-front-fill" style="font-size:3rem;color:rgba(255,255,255,0.3);"></i></div>`;
-      const precioHora = p.precio_hora ?? p.precio;
-      const precioDia = p.precio_dia;
-      const precioHtml = `<div class="price-row">${precioHora != null ? `<div class="price-item"><span class="price-label">Por hora</span><span class="price-val">Q${precioHora}</span></div>` : ''}${precioDia != null ? `<div class="price-item"><span class="price-label">Por día</span><span class="price-val">Q${precioDia}</span></div>` : ''}</div>`;
-      const gmapsUrl = (p.lat && p.lng) ? `https://www.google.com/maps/dir/?api=1&destination=${p.lat},${p.lng}` : null;
-      const disponible = p.disponible !== false ? '<span class="parking-availability"><i class="bi bi-check-circle-fill"></i>Disponible</span>' : '';
+    function focusOnMapById(id) {
+      const p = allParkings.find(x => String(x.id) === String(id));
+      if (p) focusOnMap(p);
+    }
 
-      cont.innerHTML += `
-        <div class="card-parqueo mb-3" style="overflow:hidden;">
-          ${fotoHtml}
-          <div class="p-3">
-            <div class="d-flex justify-content-between align-items-start mb-1">
-              <h6 class="fw-bold mb-0" style="color:var(--rdp-navy);">${p.nombre}</h6>
-              ${estrellas}
-            </div>
-            <small class="text-muted"><i class="bi bi-geo-alt-fill icon-inline"></i>${p.direccion || ''}</small>
-            <div class="mt-1 mb-2">${distHtml}</div>
-            <div class="mb-2">${tiposHtml}</div>
-            <div class="d-flex justify-content-between align-items-center">${precioHtml}${disponible}</div>
-            <div class="d-flex gap-2 mt-3">
-              ${gmapsUrl ? `<a href="${gmapsUrl}" target="_blank" rel="noopener" class="btn-ghost" style="flex:1;text-align:center;padding:.5rem;font-size:.85rem;"><i class="bi bi-geo-alt icon-inline"></i>Cómo llegar</a>` : ''}
-              <a href="reserve.html?id=${p.id}" class="btn-main" style="flex:2;text-align:center;padding:.5rem;font-size:.9rem;"><i class="bi bi-calendar-check icon-inline"></i>Reservar</a>
-            </div>
-          </div>
-        </div>`;
+    function focusOnMap(p) {
+      const mapDiv = document.getElementById('map');
+      if (mapDiv.style.display === 'none') {
+        mapDiv.style.display = 'block';
+        document.getElementById('btnMapa').innerHTML = '<i class="bi bi-list-check icon-inline"></i>Ver lista';
+        if (!map) initMap();
+      }
+      mapDiv.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      if (!map) return;
+      setTimeout(() => {
+        map.flyTo([p.lat, p.lng], 17, { duration: 0.8 });
+        setFocusedParking(p);
+        if (routeLine) { map.removeLayer(routeLine); routeLine = null; }
+        if (userLocation) {
+          routeLine = L.polyline(
+            [[userLocation.lat, userLocation.lng], [p.lat, p.lng]],
+            { color: '#D4AF37', weight: 3, dashArray: '8 8', opacity: 0.9 }
+          ).addTo(map);
+        }
+      }, 350);
+    }
+
+    function setFocusedParking(p) {
+      if (focusedId) {
+        document.getElementById(`card-${focusedId}`)?.classList.remove('card-parqueo--focus');
+        const prev = allParkings.find(x => String(x.id) === String(focusedId));
+        if (prev && markersLayer[focusedId]) markersLayer[focusedId].setIcon(createMarkerIcon(prev, false));
+      }
+      focusedId = p.id;
+      const cardEl = document.getElementById(`card-${p.id}`);
+      if (cardEl) { cardEl.classList.add('card-parqueo--focus'); cardEl.scrollIntoView({ behavior: 'smooth', block: 'nearest' }); }
+      if (markersLayer[p.id]) { markersLayer[p.id].setIcon(createMarkerIcon(p, true)); markersLayer[p.id].openPopup(); }
     }
 
     function toggleMap() {
@@ -199,7 +206,7 @@
       if (mapDiv.style.display === 'none') {
         mapDiv.style.display = 'block';
         btn.innerHTML = '<i class="bi bi-list-check icon-inline"></i>Ver lista';
-        initMap();
+        if (!map) initMap(); else { setTimeout(() => map.invalidateSize(), 100); actualizarMarcadores(); }
       } else {
         mapDiv.style.display = 'none';
         btn.innerHTML = '<i class="bi bi-map icon-inline"></i>Ver en mapa';
@@ -209,31 +216,85 @@
     function initMap() {
       if (map) { actualizarMarcadores(); return; }
       const center = userLocation || { lat: 14.566, lng: -89.355 };
-      map = L.map('map').setView([center.lat, center.lng], 14);
+      map = L.map('map').setView([center.lat, center.lng], 15);
       L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', { attribution: '© OpenStreetMap', maxZoom: 19 }).addTo(map);
       if (userLocation) {
-        L.circleMarker([userLocation.lat, userLocation.lng], { radius:9, fillColor:'#1565C0', color:'#fff', weight:3, fillOpacity:.9 }).addTo(map).bindPopup('<b>Tu ubicación</b>');
+        L.circleMarker([userLocation.lat, userLocation.lng], { radius: 9, fillColor: '#1565C0', color: '#fff', weight: 3, fillOpacity: .9 })
+          .addTo(map).bindPopup('<b>Tu ubicación</b>');
       }
       actualizarMarcadores();
       setTimeout(() => map.invalidateSize(), 150);
     }
 
     function actualizarMarcadores() {
-      markersLayer.forEach(m => map.removeLayer(m));
-      markersLayer = [];
+      Object.values(markersLayer).forEach(m => map.removeLayer(m));
+      markersLayer = {};
+      if (routeLine) { map.removeLayer(routeLine); routeLine = null; }
+      focusedId = null;
       allParkings.forEach(p => {
         if (!p.lat || !p.lng) return;
         const precio = p.precio_hora ?? p.precio;
-        const m = L.marker([p.lat, p.lng]).addTo(map)
-          .bindPopup(`<b>${p.nombre}</b><br><small>${p.direccion || ''}</small>${precio != null ? '<br>Q'+precio+'/hr' : ''}<br><a href="reserve.html?id=${p.id}">Reservar →</a>${(p.lat&&p.lng)?'<br><a href="https://www.google.com/maps/dir/?api=1&destination='+p.lat+','+p.lng+'" target="_blank">Cómo llegar →</a>':""}`);
-        markersLayer.push(m);
+        const gmaps = `https://www.google.com/maps/dir/?api=1&destination=${p.lat},${p.lng}`;
+        const m = L.marker([p.lat, p.lng], { icon: createMarkerIcon(p, false) }).addTo(map)
+          .bindPopup(`<div style="min-width:165px;">
+            <strong style="color:#0F172A;">${p.nombre}</strong><br>
+            <small style="color:#6b7280;">${p.direccion || ''}</small><br>
+            ${precio != null ? `<span style="font-weight:700;color:#D4AF37;">Q${precio}/hr</span><br>` : ''}
+            <div class="map-popup-actions">
+              <a href="reserve.html?id=${p.id}" class="map-popup-btn-reservar"><i class="bi bi-calendar-check"></i> Reservar</a>
+              <a href="${gmaps}" target="_blank" rel="noopener" class="map-popup-btn-ruta"><i class="bi bi-map-fill"></i> Ruta</a>
+            </div>
+          </div>`);
+        m.on('click', () => setFocusedParking(p));
+        markersLayer[p.id] = m;
       });
     }
 
+    // ── CARDS ──────────────────────────────────────────────────────
+    function tipoIcono(tipo) {
+      const m = { moto: 'bi-bicycle', carro: 'bi-car-front-fill', pickup: 'bi-truck', microbus: 'bi-bus-front-fill', camioneta: 'bi-truck-flatbed', bicicleta: 'bi-bicycle' };
+      return m[(tipo || '').toLowerCase()] || 'bi-car-front-fill';
+    }
+
+    function renderCard(p, cont) {
+      const tipos = Array.isArray(p.tipos_vehiculo) ? p.tipos_vehiculo : (p.tipo ? [p.tipo] : []);
+      const tiposHtml = tipos.map(t => `<span class="tipo-chip"><i class="bi ${tipoIcono(t)}"></i> ${t}</span>`).join('');
+      const distHtml = p.distance != null ? `<small class="text-muted"><i class="bi bi-geo-alt"></i> ${p.distance.toFixed(1)} km</small>` : '';
+      const estrellas = p.calificacion_promedio ? `<span class="stars">${'<i class="bi bi-star-fill" style="color:#ffc107;font-size:.8rem;"></i>'.repeat(Math.round(p.calificacion_promedio))}${'<i class="bi bi-star" style="color:#ffc107;font-size:.8rem;"></i>'.repeat(5 - Math.round(p.calificacion_promedio))}</span>` : '';
+      const fotoHtml = p.foto_principal
+        ? `<img src="${p.foto_principal}" alt="${p.nombre}" style="width:100%;height:140px;object-fit:cover;border-radius:12px 12px 0 0;">`
+        : `<div class="parking-foto-placeholder"><i class="bi bi-car-front-fill" style="font-size:3rem;color:rgba(255,255,255,0.3);"></i></div>`;
+      const precioHora = p.precio_hora ?? p.precio;
+      const precioDia = p.precio_dia;
+      const precioHtml = `<div class="price-row">${precioHora != null ? `<div class="price-item"><span class="price-label">Por hora</span><span class="price-val">Q${precioHora}</span></div>` : ''}${precioDia != null ? `<div class="price-item"><span class="price-label">Por día</span><span class="price-val">Q${precioDia}</span></div>` : ''}</div>`;
+      const disponible = p.disponible !== false ? '<span class="parking-availability"><i class="bi bi-check-circle-fill"></i>Disponible</span>' : '';
+
+      const card = document.createElement('div');
+      card.className = 'card-parqueo mb-3';
+      card.id = `card-${p.id}`;
+      card.style.overflow = 'hidden';
+      card.innerHTML = `
+        ${fotoHtml}
+        <div class="p-3">
+          <div class="d-flex justify-content-between align-items-start mb-1">
+            <h6 class="fw-bold mb-0" style="color:var(--rdp-navy);">${p.nombre}</h6>${estrellas}
+          </div>
+          <small class="text-muted"><i class="bi bi-geo-alt-fill icon-inline"></i>${p.direccion || ''}</small>
+          <div class="mt-1 mb-2">${distHtml}</div>
+          <div class="mb-2">${tiposHtml}</div>
+          <div class="d-flex justify-content-between align-items-center">${precioHtml}${disponible}</div>
+          <div class="d-flex gap-2 mt-3">
+            ${(p.lat && p.lng) ? `<button class="btn-ghost" style="flex:1;padding:.5rem;font-size:.82rem;" onclick="focusOnMapById('${p.id}')"><i class="bi bi-pin-map-fill icon-inline"></i>Ver en mapa</button>` : ''}
+            <a href="reserve.html?id=${p.id}" class="btn-main" style="flex:2;text-align:center;padding:.5rem;font-size:.9rem;"><i class="bi bi-calendar-check icon-inline"></i>Reservar</a>
+          </div>
+        </div>`;
+      cont.appendChild(card);
+    }
+
     function calcDist(lat1, lng1, lat2, lng2) {
-      const R = 6371, dLat = (lat2-lat1)*Math.PI/180, dLng = (lng2-lng1)*Math.PI/180;
-      const a = Math.sin(dLat/2)**2 + Math.cos(lat1*Math.PI/180)*Math.cos(lat2*Math.PI/180)*Math.sin(dLng/2)**2;
-      return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
+      const R = 6371, dLat = (lat2 - lat1) * Math.PI / 180, dLng = (lng2 - lng1) * Math.PI / 180;
+      const a = Math.sin(dLat / 2) ** 2 + Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) * Math.sin(dLng / 2) ** 2;
+      return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
     }
   </script>
 </body>
