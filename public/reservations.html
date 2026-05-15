@@ -235,7 +235,7 @@
             </div>
 
             <div style="display:flex;gap:0.5rem;">
-              <button class="btn btn-outline-primary btn-sm" onclick="verDetalles(${r.id})">
+              <button class="btn btn-outline-primary btn-sm" onclick="verDetalles('${r.id}')">
                 <i class="bi bi-eye"></i> Detalles
               </button>
 ${puedeCancel(r) ? `
@@ -264,35 +264,75 @@ ${puedeCancel(r) ? `
     }
 
     function verDetalles(reservaId) {
-      const reserva = todasReservas.find(r => r.id === reservaId);
-      if (!reserva) return;
+      const r = todasReservas.find(x => x.id == reservaId);
+      if (!r) return;
 
-      const modal = `
+      const estadoColor = { confirmada:'#16a34a', pendiente:'#d97706', finalizada:'#0F172A', cancelada:'#dc2626' }[r.estado] || '#64748b';
+      const estadoBg    = { confirmada:'#f0fdf4', pendiente:'#fffbeb', finalizada:'#f8fafc',  cancelada:'#fef2f2' }[r.estado] || '#f1f5f9';
+      const estadoIcon  = { confirmada:'bi-check-circle-fill', pendiente:'bi-hourglass-split', finalizada:'bi-check-circle-fill', cancelada:'bi-x-circle-fill' }[r.estado] || 'bi-circle';
+      const estadoLabel = { confirmada:'Confirmada', pendiente:'Pendiente', finalizada:'Finalizada', cancelada:'Cancelada' }[r.estado] || r.estado;
+
+      const fmtFull = d => d ? new Date(d).toLocaleString('es-GT', { dateStyle:'long', timeStyle:'short' }) : '—';
+      const metodoLabel = { online:'En línea', llegada:'Al llegar', anticipo:'Con anticipo' }[r.metodoPago] || (r.metodoPago || '—');
+      const codigo = r.codigoReserva || r.codigo_reserva || r.id?.toString().slice(-8).toUpperCase() || '—';
+
+      const modalEl = document.createElement('div');
+      modalEl.innerHTML = `
         <div class="modal fade" tabindex="-1">
-          <div class="modal-dialog">
-            <div class="modal-content">
-              <div class="modal-header">
-                <h5 class="modal-title">Detalles de Reserva #${reserva.id}</h5>
-                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+          <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content" style="border-radius:18px;overflow:hidden;">
+              <div class="modal-header" style="background:#0F172A;padding:1.1rem 1.25rem;">
+                <div>
+                  <div style="font-size:.72rem;color:#D4AF37;text-transform:uppercase;letter-spacing:.08em;font-weight:700;">Reserva</div>
+                  <h5 class="modal-title text-white mb-0" style="font-size:1rem;font-weight:700;">${esc(r.parqueoNombre || 'Parqueo')}</h5>
+                </div>
+                <button type="button" class="btn-close btn-close-white ms-auto" data-bs-dismiss="modal"></button>
               </div>
-              <div class="modal-body">
-                <p><strong>Parqueo:</strong> ${reserva.parqueoNombre}</p>
-                <p><strong>Anfitrión:</strong> ${reserva.anfitrionNombre}</p>
-                <p><strong>Fecha de inicio:</strong> ${new Date(reserva.fechaInicio).toLocaleString('es-GT')}</p>
-                <p><strong>Fecha de fin:</strong> ${new Date(reserva.fechaFin).toLocaleString('es-GT')}</p>
-                <p><strong>Estado:</strong> <span class="badge-estado ${reserva.estado}">${reserva.estado}</span></p>
-                <p><strong>Monto:</strong> Q${reserva.precio}</p>
+              <div class="modal-body" style="padding:1.25rem;">
+
+                <!-- Estado + Código -->
+                <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:1.1rem;">
+                  <span style="display:inline-flex;align-items:center;gap:.4rem;background:${estadoBg};color:${estadoColor};padding:.4rem .9rem;border-radius:20px;font-size:.82rem;font-weight:700;">
+                    <i class="bi ${estadoIcon}"></i>${estadoLabel}
+                  </span>
+                  <span style="font-size:.75rem;color:#64748b;">Código: <strong style="color:#0F172A;font-family:monospace;">${esc(codigo)}</strong></span>
+                </div>
+
+                <!-- Filas de datos -->
+                <div style="display:flex;flex-direction:column;gap:.6rem;">
+                  <div style="display:flex;align-items:center;gap:.75rem;padding:.65rem .85rem;background:#f8fafc;border-radius:10px;">
+                    <i class="bi bi-p-circle-fill" style="color:#D4AF37;font-size:1.1rem;flex-shrink:0;"></i>
+                    <div><div style="font-size:.72rem;color:#94a3b8;text-transform:uppercase;letter-spacing:.05em;">Parqueo</div><div style="font-weight:600;font-size:.88rem;">${esc(r.parqueoNombre||'—')}</div></div>
+                  </div>
+                  <div style="display:flex;align-items:center;gap:.75rem;padding:.65rem .85rem;background:#f8fafc;border-radius:10px;">
+                    <i class="bi bi-person-circle" style="color:#0F172A;font-size:1.1rem;flex-shrink:0;"></i>
+                    <div><div style="font-size:.72rem;color:#94a3b8;text-transform:uppercase;letter-spacing:.05em;">Anfitrión</div><div style="font-weight:600;font-size:.88rem;">${esc(r.anfitrionNombre||'—')}</div></div>
+                  </div>
+                  <div style="display:flex;align-items:center;gap:.75rem;padding:.65rem .85rem;background:#f8fafc;border-radius:10px;">
+                    <i class="bi bi-calendar-event" style="color:#0F172A;font-size:1.1rem;flex-shrink:0;"></i>
+                    <div><div style="font-size:.72rem;color:#94a3b8;text-transform:uppercase;letter-spacing:.05em;">Inicio</div><div style="font-weight:600;font-size:.88rem;">${fmtFull(r.fechaInicio)}</div></div>
+                  </div>
+                  <div style="display:flex;align-items:center;gap:.75rem;padding:.65rem .85rem;background:#f8fafc;border-radius:10px;">
+                    <i class="bi bi-calendar-check" style="color:#0F172A;font-size:1.1rem;flex-shrink:0;"></i>
+                    <div><div style="font-size:.72rem;color:#94a3b8;text-transform:uppercase;letter-spacing:.05em;">Fin</div><div style="font-weight:600;font-size:.88rem;">${fmtFull(r.fechaFin)}</div></div>
+                  </div>
+                  <div style="display:flex;align-items:center;gap:.75rem;padding:.65rem .85rem;background:#f8fafc;border-radius:10px;">
+                    <i class="bi bi-credit-card" style="color:#0F172A;font-size:1.1rem;flex-shrink:0;"></i>
+                    <div><div style="font-size:.72rem;color:#94a3b8;text-transform:uppercase;letter-spacing:.05em;">Método de pago</div><div style="font-weight:600;font-size:.88rem;">${esc(metodoLabel)}</div></div>
+                  </div>
+                  <div style="display:flex;align-items:center;justify-content:space-between;gap:.75rem;padding:.8rem .85rem;background:#0F172A;border-radius:10px;">
+                    <span style="color:#D4AF37;font-size:.8rem;font-weight:700;text-transform:uppercase;letter-spacing:.05em;">Total</span>
+                    <span style="color:#fff;font-size:1.3rem;font-weight:800;">Q${r.precio||r.precio_total||0}</span>
+                  </div>
+                </div>
               </div>
-              <div class="modal-footer">
-                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cerrar</button>
+              <div class="modal-footer" style="border:none;padding:.75rem 1.25rem 1.1rem;">
+                <button type="button" class="btn-main" style="width:100%;" data-bs-dismiss="modal">Cerrar</button>
               </div>
             </div>
           </div>
-        </div>
-      `;
+        </div>`;
 
-      const modalEl = document.createElement('div');
-      modalEl.innerHTML = modal;
       document.body.appendChild(modalEl);
       const m = new bootstrap.Modal(modalEl.querySelector('.modal'));
       m.show();
