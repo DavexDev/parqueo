@@ -142,7 +142,7 @@
   <script src="lib/supabase-client.js"></script>
   <script src="app.js"></script>
   <script>
-    const user = requireLogin(['anfitrion','admin']);
+    const user = requireLogin(['visitante','anfitrion','admin']);
     let pickMap = null, pickMarker = null;
 
     document.addEventListener('DOMContentLoaded', () => {
@@ -221,6 +221,13 @@
       };
 
       try {
+        // Auto-upgrade a anfitrion si aun es visitante
+        if (user.rol === 'visitante' && window.rdpSupabase && window.rdpSupabase.isConfigured) {
+          await window.rdpSupabase.updateProfile(user.id, { rol: 'anfitrion' });
+          user.rol = 'anfitrion';
+          setUser(user);
+        }
+
         let parkingId;
 
         if (window.rdpSupabase && window.rdpSupabase.isConfigured) {

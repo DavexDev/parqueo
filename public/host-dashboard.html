@@ -211,7 +211,7 @@
     };
 
     document.addEventListener('DOMContentLoaded', () => {
-      const user = requireLogin(['anfitrion']);
+      const user = requireLogin(['visitante','anfitrion','admin']);
       if (!user) return;
 
       renderNavbar();
@@ -474,12 +474,12 @@
         const fechaInicio = new Date().toISOString();
         const fechaFin = new Date(Date.now() + 30*24*3600*1000).toISOString();
         const { error } = await client.from('memberships').insert({
-          usuario_id: user.id,
+          anfitrion_id: user.id,
           tipo: 'premium',
           precio: 200,
-          fecha_inicio: fechaInicio,
-          fecha_fin: fechaFin,
-          estado: 'activo'
+          fecha_inicio: new Date().toISOString().split('T')[0],
+          fecha_fin: new Date(Date.now() + 30*24*3600*1000).toISOString().split('T')[0],
+          estado: 'activa'
         });
         if (error) { alert('Error al activar: ' + error.message); return; }
         document.getElementById('planNombre').textContent = '⭐ Premium';

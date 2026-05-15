@@ -90,7 +90,7 @@
           <div class="d-flex flex-column gap-2">
             <label class="pago-card">
               <div class="d-flex align-items-center gap-3">
-                <input type="radio" name="metodo_pago" value="en_linea" required>
+                <input type="radio" name="metodo_pago" value="online" required>
                 <div>
                   <div class="fw-bold">&#128179; En línea</div>
                   <small class="text-muted">Pago seguro con tarjeta (próximamente)</small>
@@ -99,7 +99,7 @@
             </label>
             <label class="pago-card">
               <div class="d-flex align-items-center gap-3">
-                <input type="radio" name="metodo_pago" value="al_llegar" checked>
+                <input type="radio" name="metodo_pago" value="llegada" checked>
                 <div>
                   <div class="fw-bold">&#129309; Al llegar</div>
                   <small class="text-muted">Pago en efectivo al anfitrion</small>
@@ -327,8 +327,8 @@
           cantidad_unidades,
           precio_subtotal: precio_total,
           precio_total,
-          placa: document.getElementById('placa').value.trim() || null,
-          color_vehiculo: document.getElementById('color_vehiculo').value.trim() || null,
+          vehiculo_placa: document.getElementById('placa').value.trim() || null,
+          vehiculo_color: document.getElementById('color_vehiculo').value.trim() || null,
           estado: 'pendiente'
         };
 
@@ -374,7 +374,7 @@
       const codigo = reserva?.codigo_reserva || reserva?.id?.toString().slice(-8).toUpperCase() || '--------';
       document.getElementById('codigoReserva').textContent = codigo;
 
-      const metodoLabels = { en_linea:'En línea', al_llegar:'Al llegar', anticipo:'Con anticipo' };
+        const metodoLabels = { online:'En línea', llegada:'Al llegar', anticipo:'Con anticipo' };
       const metodo = document.querySelector('input[name="metodo_pago"]:checked')?.value || 'al_llegar';
       const fmtFecha = d => d ? new Date(d).toLocaleString('es-GT', { dateStyle:'medium', timeStyle:'short' }) : '-';
 
