@@ -1,3 +1,4 @@
+// © 2026 RDP S.A. — Parqueos Esquipulas, Guatemala. Código propietario. Ver /terminos.html.
 // app.js — Sesión, navbar y helpers globales
 
 function getUser() {

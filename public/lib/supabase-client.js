@@ -1,4 +1,5 @@
 /**
+ * © 2026 RDP S.A. — Parqueos Esquipulas, Guatemala. Código propietario. Ver /terminos.html.
  * RDP S.A. — Supabase Client (CDN version)
  * Requiere en el HTML (antes de este script):
  * <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>

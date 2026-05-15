@@ -1,5 +1,7 @@
 // server.js
-// MVP Sistema de Parqueos Esquipulas - Mock API REST
+// © 2026 RDP S.A. — Parqueos Esquipulas, Guatemala
+// CÓDIGO PROPIETARIO — Ver archivo LICENSE para condiciones de uso.
+// Queda prohibida la copia, distribución o uso no autorizado de este software.
 
 require('dotenv').config();
 
@@ -21,6 +23,75 @@ const RESEND_API_KEY = process.env.RESEND_API_KEY || 're_demo_key';
 const resend = new Resend(RESEND_API_KEY);
 
 app.use(express.json());
+
+// ── Security headers ─────────────────────────────────────────
+app.use((req, res, next) => {
+  // Evitar que el sitio sea embebido en iframes (clickjacking)
+  res.setHeader('X-Frame-Options', 'DENY');
+  // Evitar que el navegador "adivine" el tipo MIME (MIME sniffing)
+  res.setHeader('X-Content-Type-Options', 'nosniff');
+  // Referrer controlado: solo enviar origen en peticiones HTTPS
+  res.setHeader('Referrer-Policy', 'strict-origin-when-cross-origin');
+  // Desactivar detección automática XSS del navegador legado (ya cubierto por CSP)
+  res.setHeader('X-XSS-Protection', '0');
+  // Forzar HTTPS durante 1 año si viene de producción
+  if (req.headers['x-forwarded-proto'] === 'https') {
+    res.setHeader('Strict-Transport-Security', 'max-age=31536000; includeSubDomains; preload');
+  }
+  // Política de permisos: denegar cámara, micrófono y geolocalización por defecto
+  res.setHeader('Permissions-Policy', 'camera=(), microphone=(), geolocation=(self)');
+  // Content Security Policy
+  res.setHeader('Content-Security-Policy', [
+    "default-src 'self'",
+    "script-src 'self' 'unsafe-inline' cdn.jsdelivr.net www.gstatic.com",
+    "style-src 'self' 'unsafe-inline' cdn.jsdelivr.net fonts.googleapis.com",
+    "font-src 'self' fonts.gstatic.com cdn.jsdelivr.net",
+    "img-src 'self' data: blob: *.supabase.co tile.openstreetmap.org *.openstreetmap.org maps.googleapis.com",
+    "connect-src 'self' *.supabase.co fcm.googleapis.com",
+    "frame-src 'none'",
+    "object-src 'none'",
+    "base-uri 'self'"
+  ].join('; '));
+  // Ocultar firma del servidor
+  res.removeHeader('X-Powered-By');
+  next();
+});
+
+// ── Rate limiting (in-memory, sin dependencias) ──────────────
+const _rateLimitStore = new Map();
+function rateLimit({ windowMs = 60_000, max = 30, message = 'Demasiadas solicitudes. Intenta más tarde.' } = {}) {
+  return (req, res, next) => {
+    const key = req.ip || req.connection.remoteAddress || 'unknown';
+    const now = Date.now();
+    const entry = _rateLimitStore.get(key) || { count: 0, resetAt: now + windowMs };
+    if (now > entry.resetAt) { entry.count = 0; entry.resetAt = now + windowMs; }
+    entry.count++;
+    _rateLimitStore.set(key, entry);
+    res.setHeader('X-RateLimit-Limit', max);
+    res.setHeader('X-RateLimit-Remaining', Math.max(0, max - entry.count));
+    if (entry.count > max) {
+      return res.status(429).json({ success: false, message });
+    }
+    next();
+  };
+}
+// Limpiar entradas expiradas cada 5 minutos
+setInterval(() => {
+  const now = Date.now();
+  for (const [key, val] of _rateLimitStore) {
+    if (now > val.resetAt) _rateLimitStore.delete(key);
+  }
+}, 5 * 60_000);
+
+// Rate limits específicos
+const authRateLimit    = rateLimit({ windowMs: 15 * 60_000, max: 10, message: 'Demasiados intentos de autenticación. Espera 15 minutos.' });
+const apiRateLimit     = rateLimit({ windowMs: 60_000,       max: 60  });
+const strictRateLimit  = rateLimit({ windowMs: 60_000,       max: 5,  message: 'Límite de solicitudes alcanzado. Espera un momento.' });
+
+app.use('/api/auth', authRateLimit);
+app.use('/api/admin', rateLimit({ windowMs: 60_000, max: 30 }));
+app.use('/api', apiRateLimit);
+
 app.use(express.static(path.join(__dirname, 'public')));
 
 function sanitizeUser(user) {

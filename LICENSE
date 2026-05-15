@@ -1,0 +1,72 @@
+LICENCIA PROPIETARIA — RDP S.A.
+Copyright (c) 2026 RDP S.A. — Parqueos Esquipulas, Guatemala
+Todos los derechos reservados.
+
+================================================================================
+AVISO IMPORTANTE — LEA ANTES DE USAR, COPIAR O DISTRIBUIR
+================================================================================
+
+Este software, incluyendo pero no limitado a su código fuente, código compilado,
+diseño, estructura de base de datos, interfaces de usuario, documentación, activos
+gráficos y toda la lógica de negocio contenida en este repositorio, es propiedad
+exclusiva e intelectual de RDP S.A. ("la Empresa").
+
+QUEDA ESTRICTAMENTE PROHIBIDO, SIN AUTORIZACIÓN ESCRITA PREVIA DE RDP S.A.:
+
+  1. COPIA Y REPRODUCCIÓN
+     Copiar, reproducir, duplicar o almacenar total o parcialmente este software
+     en cualquier medio, formato o sistema, sea físico o digital.
+
+  2. DISTRIBUCIÓN
+     Distribuir, publicar, compartir, sublicenciar o poner a disposición de
+     terceros este software o cualquier parte del mismo, ya sea de forma gratuita
+     o comercial, pública o privada.
+
+  3. MODIFICACIÓN Y OBRAS DERIVADAS
+     Modificar, adaptar, traducir, descompilar, realizar ingeniería inversa,
+     desensamblar o crear productos derivados basados en este software.
+
+  4. USO COMERCIAL NO AUTORIZADO
+     Usar este software, total o parcialmente, para desarrollar, vender u operar
+     productos o servicios competidores o complementarios sin licencia expresa.
+
+  5. ACCESO NO AUTORIZADO
+     Acceder al código fuente por cualquier medio no autorizado, incluyendo pero
+     no limitado a: clonación no autorizada del repositorio, extracción de código
+     desde herramientas de desarrollo del navegador, sniffing de tráfico de red,
+     o cualquier técnica de exfiltración de datos.
+
+  6. ELIMINACIÓN DE AVISOS
+     Eliminar, ocultar o alterar cualquier aviso de copyright, marca comercial,
+     atribución o aviso legal presente en el software.
+
+USO PERMITIDO:
+  - El personal autorizado de RDP S.A. puede usar, modificar y desplegar este
+    software exclusivamente para operaciones internas de la Empresa.
+  - Los usuarios finales pueden acceder a la interfaz pública de la plataforma
+    en https://parqueo-beryl.vercel.app únicamente para los fines descritos en
+    los Términos de Uso (ver /terminos.html).
+
+CONSECUENCIAS DEL INCUMPLIMIENTO:
+  El incumplimiento de esta licencia constituye una violación de los derechos de
+  propiedad intelectual de RDP S.A. y puede dar lugar a:
+    - Acciones civiles por daños y perjuicios.
+    - Acciones penales conforme al Código Penal de Guatemala (Decreto 17-73) y
+      la Ley de Derechos de Autor y Derechos Conexos (Decreto 33-98).
+    - Notificaciones de eliminación (DMCA Takedown) ante plataformas de
+      hospedaje de código (GitHub, etc.).
+
+GARANTÍA Y RESPONSABILIDAD:
+  ESTE SOFTWARE SE PROPORCIONA "TAL CUAL" PARA USO INTERNO. LA EMPRESA NO OFRECE
+  NINGUNA GARANTÍA EXPRESA O IMPLÍCITA SOBRE SU FUNCIONAMIENTO. EN NINGÚN CASO
+  LA EMPRESA SERÁ RESPONSABLE POR DAÑOS DERIVADOS DEL USO NO AUTORIZADO.
+
+CONTACTO LEGAL:
+  Para solicitar licencias, reportar violaciones o consultas legales, contacte a
+  través del sistema de mensajes de la plataforma o al representante legal de
+  RDP S.A. en Esquipulas, Chiquimula, Guatemala.
+
+================================================================================
+© 2026 RDP S.A. — Parqueos Esquipulas | Todos los derechos reservados
+Versión del software: 2.0.0
+================================================================================
