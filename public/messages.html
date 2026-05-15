@@ -156,11 +156,23 @@
       });
 
       renderContactos(contactos);
-      // URL param
+      // URL param: abrir conversación directa (incluye primer contacto sin historial previo)
       const params = new URLSearchParams(window.location.search);
-      if (params.get('chat')) {
-        const target = contactos.find(c => c.id === params.get('chat'));
-        if (target) abrirConversacion(target.id, target.nombre, null);
+      const chatId = params.get('chat');
+      if (chatId) {
+        const target = contactos.find(c => c.id === chatId);
+        if (target) {
+          abrirConversacion(target.id, target.nombre, null);
+        } else {
+          // No hay historial previo — cargar perfil y abrir igual
+          window.rdpSupabase.getProfile(chatId).then(({ data: prof }) => {
+            if (!prof) return;
+            const newContact = { id: chatId, nombre: prof.nombre || 'Usuario', lastMsg: '', lastTime: null, unread: 0 };
+            _todosContactos.push(newContact);
+            _renderContactosFiltrados(_todosContactos);
+            abrirConversacion(newContact.id, newContact.nombre, null);
+          });
+        }
       }
     }
 

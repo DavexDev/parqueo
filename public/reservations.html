@@ -177,10 +177,10 @@
         }[r.estado] || 'light';
 
         const badgeEstado = {
-          'pendiente': '⏳ Pendiente',
-          'confirmada': '✓ Confirmada',
-          'finalizada': '✓ Finalizada',
-          'cancelada': '✗ Cancelada'
+          'pendiente': '<i class="bi bi-hourglass-split me-1"></i>Pendiente',
+          'confirmada': '<i class="bi bi-check-circle me-1"></i>Confirmada',
+          'finalizada': '<i class="bi bi-check-circle-fill me-1"></i>Finalizada',
+          'cancelada': '<i class="bi bi-x-circle me-1"></i>Cancelada'
         }[r.estado] || r.estado;
 
         const fecha = r.fechaInicio ? new Date(r.fechaInicio).toLocaleDateString('es-GT') : 'Sin fecha';
@@ -245,11 +245,13 @@ ${puedeCancel(r) ? `
               <button class="btn btn-outline-danger btn-sm" disabled title="Ya no puedes cancelar esta reserva (ya inició)">
                 <i class="bi bi-x-circle"></i> Cancelar
               </button>` : ''}
-              ${r.estado === 'confirmada' || r.estado === 'pendiente' ? `
-                <button class="btn btn-outline-info btn-sm" onclick="contactarAnfitrion('${r.anfitrionNombre}', '${r.anfitrionId}')">
+              ${r.estado === 'confirmada' ? `
+                <button class="btn btn-outline-info btn-sm" onclick="contactarAnfitrion('${r.anfitrionId}')">
                   <i class="bi bi-chat-dots"></i> Contactar
-                </button>
-              ` : ''}
+                </button>` : r.estado === 'pendiente' ? `
+                <button class="btn btn-outline-secondary btn-sm" disabled title="Disponible cuando el anfitrion acepte la reserva">
+                  <i class="bi bi-chat-dots"></i> Contactar
+                </button>` : ''}
               ${r.estado === 'finalizada' ? `
                 <a href="reviews.html?id=${r.parking_id}&reserva=${r.id}" class="btn btn-outline-warning btn-sm">
                   <i class="bi bi-star"></i> Reseñar
@@ -326,9 +328,8 @@ ${puedeCancel(r) ? `
       cargarReservas();
     }
 
-    function contactarAnfitrion(nombre, anfitrionId) {
-      // Redirigir a messages.html con el anfitrión preseleccionado
-      window.location.href = `messages.html?contact=${anfitrionId}`;
+    function contactarAnfitrion(anfitrionId) {
+      window.location.href = `messages.html?chat=${anfitrionId}`;
     }
   </script>
 </body>
